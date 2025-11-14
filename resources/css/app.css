@@ -1,0 +1,15 @@
+@import '/node_modules/bootstrap/dist/css/bootstrap.min.css';
+@import './style.css';
+@import './style-preset.css';
+@import './custom.css';
+@import './dataTable.css';
+@import './select2.css';
+@import './bootstrap-datepicker.standalone.min.css';
+@import './buttons.dataTables.min.css';
+@import '../fonts/inter/inter.css';
+@import '../fonts/tabler-icons.min.css';
+@import '../fonts/feather.css';
+@import '../fonts/fontawesome.css';
+@import '../fonts/material.css';
+@import '../jstree/dist/themes/default/style.css';
+
