@@ -74,6 +74,18 @@
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link"
+                id="kanban-tab-{{ $index }}"
+                data-bs-toggle="tab"
+                data-bs-target="#kanban-{{ $index }}"
+                type="button"
+                role="tab"
+                aria-controls="Kanban-{{ $index }}"
+                aria-selected="false">
+                <i class=" me-1"></i>Kanban
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link"
                 id="pic-tab-{{ $index }}"
                 data-bs-toggle="tab"
                 data-bs-target="#pic-{{ $index }}"
@@ -718,6 +730,15 @@
                     </div>
                 </div>
             </div>
+        </div>
+        {{-- TAB KANBAN --}}
+        <div class="tab-pane fade"
+            id="kanban-{{ $index }}"
+            role="tabpanel"
+            aria-labelledby="kanban-tab-{{ $index }}">
+
+            @include('project-mgt.partials.kanban', ['project' => $project])
+
         </div>
         {{-- TAB PIC --}}
         <div class="tab-pane fade"

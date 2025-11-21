@@ -97,6 +97,12 @@ class Projects extends Model
             'type' => 'plan'
         ];
     }
+
+        public function kanban()
+    {
+        return $this->hasMany(Kanban::class, 'projectId', 'id');
+    }
+
     public function getOverallProgress()
     {
         $actualTimelines = $this->actualTimelines;

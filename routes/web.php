@@ -9,6 +9,7 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TimelineController;
+use App\Http\Controllers\KanbanController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,7 +63,14 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/projects/{project}/timeline/{timeline}', [TimelineController::class, 'destroy'])->name('timeline.destroy');
     Route::get('/projects/{project}/timeline/gantt-data', [TimelineController::class, 'getGanttData'])->name('timeline.gantt-data');
 });
-
+// Route Kanban - PERBAIKI INI
+Route::prefix('projects/{projectId}/kanban')->group(function () {
+    Route::get('/', [KanbanController::class, 'index'])->name('kanban.index');
+    Route::post('/', [KanbanController::class, 'store'])->name('kanban.store');
+    Route::put('/{id}', [KanbanController::class, 'update'])->name('kanban.update');
+    Route::post('/status', [KanbanController::class, 'updateStatus'])->name('kanban.updateStatus');
+    Route::delete('/{id}', [KanbanController::class, 'delete'])->name('kanban.delete');
+});
 
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'doLogin'])->name('doLogin');
