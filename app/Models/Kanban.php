@@ -11,24 +11,30 @@ class Kanban extends Model
 
     protected $table = 'kanban';
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'id',
         'projectId',
         'title',
-        'date_start',
-        'date_end',
-        'duration',
         'description',
         'priority',
         'status',
+        'date_start',
+        'date_end',
+        'duration',
     ];
 
-    public $incrementing = false;
-    protected $keyType = 'string';
-
+    /** Relasi ke Project */
     public function project()
     {
-        return $this->belongsTo(Projects::class, 'projectId');
+        return $this->belongsTo(Projects::class, 'projectId', 'id');
     }
-}
 
+    /** Relasi ke Subtasks */
+    public function subtasks()
+{
+    return $this->hasMany(Subtask::class, 'kanbanId', 'id');
+}
+}

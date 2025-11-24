@@ -10,6 +10,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\KanbanController;
+use App\Http\Controllers\SubtaskController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,13 +65,29 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{project}/timeline/gantt-data', [TimelineController::class, 'getGanttData'])->name('timeline.gantt-data');
 });
 // Route Kanban - PERBAIKI INI
-Route::prefix('projects/{projectId}/kanban')->group(function () {
+// ROUTE KANBAN
+Route::prefix('projects/{project}/kanban')->group(function () {
+
     Route::get('/', [KanbanController::class, 'index'])->name('kanban.index');
     Route::post('/', [KanbanController::class, 'store'])->name('kanban.store');
-    Route::put('/{id}', [KanbanController::class, 'update'])->name('kanban.update');
+    Route::put('/{kanban}', [KanbanController::class, 'update'])->name('kanban.update');
     Route::post('/status', [KanbanController::class, 'updateStatus'])->name('kanban.updateStatus');
-    Route::delete('/{id}', [KanbanController::class, 'delete'])->name('kanban.delete');
+    Route::delete('/{kanban}', [KanbanController::class, 'delete'])->name('kanban.delete');
+
+    // SUBTASK ROUTES — FIXED!!!
+    Route::get('/{kanban}/subtasks', [SubtaskController::class, 'index'])->name('subtask.list');
+
+    Route::post('/{kanban}/subtasks', [SubtaskController::class, 'store'])->name('subtask.store');
+
+    Route::put('/{kanban}/subtasks/{subtask}', [SubtaskController::class, 'update'])->name('subtask.update');
+
+    Route::delete('/{kanban}/subtasks/{subtask}', [SubtaskController::class, 'delete'])->name('subtask.delete');
+
+    Route::post('/{kanban}/subtasks/{subtask}/toggle-status', [SubtaskController::class, 'toggleStatus'])
+        ->name('subtask.toggleStatus');
 });
+
+
 
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'doLogin'])->name('doLogin');

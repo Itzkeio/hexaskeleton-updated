@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 class ProjectController extends Controller
 {
 
-     protected $rbacService;
+    protected $rbacService;
 
     public function __construct(RbacService $rbacService)
     {
@@ -44,6 +44,13 @@ class ProjectController extends Controller
 
     public function search(Request $request)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
+        
         $query = Projects::with(['version', 'timeline', 'versions']);
 
         if ($request->has('search') && $request->search != '') {
@@ -70,6 +77,12 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -293,6 +306,13 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk menambah version baru
     public function addVersion(Request $request, $id)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
+
         $project = Projects::with('versions')->findOrFail($id);
 
         $validated = $request->validate([
@@ -354,6 +374,13 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk edit version
     public function editVersion(Request $request, $projectId, $versionId)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
+
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
             ->where('id', $versionId)
@@ -416,6 +443,13 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk delete version
     public function deleteVersion(Request $request, $projectId, $versionId)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
+
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
             ->where('id', $versionId)
@@ -482,6 +516,13 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk set version sebagai active
     public function setActiveVersion(Request $request, $projectId, $versionId)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
+        
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
             ->where('id', $versionId)
