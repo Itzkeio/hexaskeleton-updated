@@ -55,6 +55,8 @@
 {{-- jQuery Script --}}
 <script>
     $(document).ready(function() {
+        const $kanbanContainer = $("#kanban-board");
+          const loadedKanbanBoards = {};
 
         // ======================================
         // 🔹 Reset Tabs ke Default (Details Tab)
@@ -74,6 +76,14 @@
             $('.project-btn').off('click').on('click', function() {
                 const index = $(this).data('project-index');
                 const projectId = $(this).data('project-id');
+                const $selectedData = $(`.project-data[data-index="${index}"]`);
+                const $localKanbanRoot = $selectedData.find('#kanban-root');
+
+                if ($localKanbanRoot.length) {
+                    $localKanbanRoot.attr('data-project-id', projectId.toString());
+                }
+
+                $('#kanban-root').attr('data-project-id', projectId.toString());
 
                 $('.project-btn').removeClass('btn-primary').addClass('btn-outline-secondary');
                 $(this).removeClass('btn-outline-secondary').addClass('btn-primary');
@@ -89,7 +99,82 @@
                     <p class="text-muted">Klik tab Timeline untuk melihat Gantt Chart</p>
                 </div>
             `);
+            // If we have a kanban container inside this project block, try loading it (AJAX)
+                if ($kanbanContainer.length) {
+                    // if already loaded, simply re-init kanban (in case elements were detached)
+                    if (loadedKanbanBoards[projectId]) {
+                        // ensure kanban-root inside container has the correct projectId
+                        $kanbanContainer.find('#kanban-root').attr('data-project-id', projectId.toString());
+                        // call init from kanban.js (if available)
+                        if (typeof initKanbanBoard === 'function') {
+                            try { initKanbanBoard(); } catch (err) { console.warn('initKanbanBoard error', err); }
+                        } else {
+                            console.warn('initKanbanBoard() not found — make sure kanban.js is loaded.');
+                        }
+                        return;
+                    }
+
+                    // show small loading placeholder
+                    const prevHtml = $kanbanContainer.html();
+                    $kanbanContainer.data('prev-html', prevHtml);
+                    $kanbanContainer.html(`
+                        <div class="text-center py-4 kanban-loading-placeholder">
+                            <div class="spinner-border text-primary" role="status" style="width:2rem;height:2rem">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div class="text-muted mt-2">Loading Kanban...</div>
+                        </div>
+                    `);
+
+                    // fetch kanban partial (AJAX)
+                    $.ajax({
+                        url: `/projects/${projectId}/kanban`,
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            // server should return { success: true, html: '...' }
+                            if (response && response.html) {
+                                $kanbanContainer.html(response.html);
+
+                                // set data-project-id on the injected kanban-root (important)
+                                $kanbanContainer.find('#kanban-root').attr('data-project-id', projectId.toString());
+                                // also set global root (in case other code reads it)
+                                $('#kanban-root').attr('data-project-id', projectId.toString());
+
+                                // mark loaded to avoid repeated requests
+                                loadedKanbanBoards[projectId] = true;
+
+                                // re-init kanban behaviors (drag/drop, modals, etc)
+                                if (typeof initKanbanBoard === 'function') {
+                                    try { initKanbanBoard(); } catch (err) { console.error('initKanbanBoard error', err); }
+                                } else {
+                                    console.warn('initKanbanBoard() not found — ensure js/kanban.js is included.');
+                                }
+
+                                console.log(`✅ Kanban loaded for project ${projectId}`);
+                            } else {
+                                console.warn('Unexpected response from /kanban AJAX', response);
+                                $kanbanContainer.html(`<div class="alert alert-warning">No kanban content returned.</div>`);
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Failed to load kanban board:', xhr);
+                            const errHtml = `
+                                <div class="alert alert-danger">
+                                    <i class="ti ti-alert-circle me-2"></i>
+                                    Failed to load Kanban Board. Please refresh or try again.
+                                </div>`;
+                            $kanbanContainer.html(errHtml);
+                        }
+                    });
+                } else {
+                    // fallback: no kanban-container found in this project block (maybe page structure different)
+                    console.warn(`No .kanban-container inside project-data index=${index}`);
+                }
             });
+
         }
 
         // Inisialisasi awal

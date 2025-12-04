@@ -737,7 +737,7 @@
             role="tabpanel"
             aria-labelledby="kanban-tab-{{ $index }}">
 
-            @include('project-mgt.partials.kanban', ['project' => $project])
+            @include('project-mgt.kanban.index', ['project' => $project])
 
         </div>
         {{-- TAB PIC --}}

@@ -11,6 +11,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\SubtaskController;
+use App\Http\Controllers\KanbanLogController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -44,49 +46,98 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/log/audittrail', [LogController::class, 'index']);
     Route::get('/logs/audit-trail-data', [LogController::class, 'datatable'])->name('logs.datatable');
 
-    Route::get('/menu/structure', [MenuController::class, 'getMenuStructure'])->name('menu.structure');
-    Route::get('/project-mgt/projects', [ProjectController::class, 'index'])->name('projects.index');
-    Route::get('/project-mgt/projects/create', [ProjectController::class, 'create'])->name('projects.create');
-    Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
-    Route::get('project-icon/{filename}', [ProjectController::class, 'displayIcon'])->name('project.icon');
-    Route::get('/projects/{id}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
-    Route::put('/projects/{id}', [ProjectController::class, 'update'])->name('projects.update');
-    Route::delete('/projects/{id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
-    Route::get('/projects/search', [ProjectController::class, 'search'])->name('projects.search'); // Route baru untuk live search
-    Route::post('/projects/{id}/versions', [ProjectController::class, 'addVersion'])->name('projects.addVersion');
-    Route::put('/projects/{projectId}/versions/{versionId}', [ProjectController::class, 'editVersion'])->name('projects.editVersion');
-    Route::delete('/projects/{projectId}/versions/{versionId}', [ProjectController::class, 'deleteVersion'])->name('projects.deleteVersion');
-    Route::post('/projects/{projectId}/versions/{versionId}/activate', [ProjectController::class, 'setActiveVersion'])->name('projects.setActiveVersion');
-    Route::get('/projects/search', [ProjectController::class, 'search'])->name('projects.search');
-    Route::resource('projects', ProjectController::class);
-    Route::post('/projects/{project}/timeline', [TimelineController::class, 'store'])->name('timeline.store');
-    Route::put('/projects/{project}/timeline/{timeline}', [TimelineController::class, 'update'])->name('timeline.update');
-    Route::delete('/projects/{project}/timeline/{timeline}', [TimelineController::class, 'destroy'])->name('timeline.destroy');
-    Route::get('/projects/{project}/timeline/gantt-data', [TimelineController::class, 'getGanttData'])->name('timeline.gantt-data');
-});
-// Route Kanban - PERBAIKI INI
-// ROUTE KANBAN
-Route::prefix('projects/{project}/kanban')->group(function () {
-
-    Route::get('/', [KanbanController::class, 'index'])->name('kanban.index');
-    Route::post('/', [KanbanController::class, 'store'])->name('kanban.store');
-    Route::put('/{kanban}', [KanbanController::class, 'update'])->name('kanban.update');
-    Route::post('/status', [KanbanController::class, 'updateStatus'])->name('kanban.updateStatus');
-    Route::delete('/{kanban}', [KanbanController::class, 'delete'])->name('kanban.delete');
-
-    // SUBTASK ROUTES — FIXED!!!
-    Route::get('/{kanban}/subtasks', [SubtaskController::class, 'index'])->name('subtask.list');
-
-    Route::post('/{kanban}/subtasks', [SubtaskController::class, 'store'])->name('subtask.store');
-
-    Route::put('/{kanban}/subtasks/{subtask}', [SubtaskController::class, 'update'])->name('subtask.update');
-
-    Route::delete('/{kanban}/subtasks/{subtask}', [SubtaskController::class, 'delete'])->name('subtask.delete');
-
-    Route::post('/{kanban}/subtasks/{subtask}/toggle-status', [SubtaskController::class, 'toggleStatus'])
-        ->name('subtask.toggleStatus');
+    
 });
 
+Route::get('/menu/structure', [MenuController::class, 'getMenuStructure'])->name('menu.structure');
+
+/* -------------------------
+    PROJECT ROUTES (manual)
+--------------------------*/
+Route::get('/project-mgt/projects', [ProjectController::class, 'index'])->name('projects.index');
+Route::get('/project-mgt/projects/create', [ProjectController::class, 'create'])->name('projects.create');
+Route::post('/projects', [ProjectController::class, 'store'])->name('projects.store');
+Route::get('project-icon/{filename}', [ProjectController::class, 'displayIcon'])->name('project.icon');
+Route::get('/projects/{id}/edit', [ProjectController::class, 'edit'])->name('projects.edit');
+Route::put('/projects/{id}', [ProjectController::class, 'update'])->name('projects.update');
+Route::delete('/projects/{id}', [ProjectController::class, 'destroy'])->name('projects.destroy');
+
+Route::get('/projects/search', [ProjectController::class, 'search'])->name('projects.search'); // hanya sekali
+
+Route::post('/projects/{projectId}/versions', [ProjectController::class, 'addVersion'])->name('projects.addVersion');
+Route::put('/projects/{projectId}/versions/{versionId}', [ProjectController::class, 'editVersion'])->name('projects.editVersion');
+Route::delete('/projects/{projectId}/versions/{versionId}', [ProjectController::class, 'deleteVersion'])->name('projects.deleteVersion');
+Route::post('/projects/{projectId}/versions/{versionId}/activate', [ProjectController::class, 'setActiveVersion'])->name('projects.setActiveVersion');
+
+Route::post('/projects/{project}/timeline', [TimelineController::class, 'store'])->name('timeline.store');
+Route::put('/projects/{project}/timeline/{timeline}', [TimelineController::class, 'update'])->name('timeline.update');
+Route::delete('/projects/{project}/timeline/{timeline}', [TimelineController::class, 'destroy'])->name('timeline.destroy');
+Route::get('/projects/{project}/timeline/gantt-data', [TimelineController::class, 'getGanttData'])->name('timeline.gantt-data');
+
+/* --------------------------------
+|         KANBAN (TASK)
+|---------------------------------*/
+
+// GET Kanban board (AJAX or full page)
+Route::get('/projects/{project}/kanban', 
+    [KanbanController::class, 'index']
+)->name('kanban.index');
+
+// Create Task
+Route::post('/projects/{project}/kanban', 
+    [KanbanController::class, 'store']
+)->name('kanban.store');
+
+// Update Task
+Route::put('/projects/{project}/kanban/{kanban}', 
+    [KanbanController::class, 'update']
+)->name('kanban.update');
+
+// Delete Task
+Route::delete('/projects/{project}/kanban/{kanban}', 
+    [KanbanController::class, 'destroy']
+)->name('kanban.delete');
+
+// Drag & Drop update status
+Route::post('/projects/{project}/kanban/status', 
+    [KanbanController::class, 'updateStatus']
+)->name('kanban.status.update');
+
+Route::delete('/projects/{project}/kanban/file/{file}', 
+    [KanbanController::class, 'destroyFile'])
+    ->name('kanban.file.delete');
+
+Route::get('/project/{project}/kanban/logs', 
+    [KanbanLogController::class, 'index'])
+    ->name('kanban.logs.index');
+
+Route::get('/project/{project}/kanban/logs/datatable',
+    [KanbanLogController::class, 'datatable'])
+    ->name('kanban.logs.datatable');
+/* -------------------------
+        SUBTASK ROUTES
+--------------------------*/
+Route::get('/projects/{project}/kanban/{kanban}/subtasks', [SubtaskController::class, 'index'])
+    ->name('subtask.index');
+
+Route::post('/projects/{project}/kanban/{kanban}/subtasks', [SubtaskController::class, 'store'])
+    ->name('subtask.store');
+
+Route::put('/projects/{project}/kanban/{kanban}/subtasks/{subtask}', [SubtaskController::class,'update'])
+    ->name('subtask.update');
+
+Route::delete('/projects/{project}/kanban/{kanban}/subtasks/{subtask}', [SubtaskController::class,'destroy'])
+    ->name('subtask.delete');
+
+// DELETE FILE (SUBTASK)
+Route::delete('/projects/{project}/kanban/{kanban}/subtasks/file/{file}', 
+    [SubtaskController::class, 'deleteFile'])
+    ->name('kanban.subtask.file.delete');
+
+// TOGGLE STATUS
+Route::post('/projects/{project}/kanban/{kanban}/subtasks/{subtask}/toggle-status',
+    [SubtaskController::class,'toggleStatus'])
+    ->name('subtask.toggle.status');
 
 
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
