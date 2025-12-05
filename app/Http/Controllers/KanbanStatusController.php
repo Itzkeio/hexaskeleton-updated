@@ -2,18 +2,35 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\RbacService;
 use App\Models\Projects;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\KanbanStatus;
+use Illuminate\Support\Facades\Auth;
 
 class KanbanStatusController extends Controller
 {
+     protected $rbacService;
+
+    public function __construct(RbacService $rbacService)
+    {
+        $this->rbacService = $rbacService;
+    }
     /**
      * Halaman manage status
      */
     public function index(Projects $project)
     {
+         // Cek akses RBAC
+        // Cek akses RBAC
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.kanbanStatus');
+
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
+
         return view('project-mgt.kanban.status.index', [
             'project'   => $project,
             'statuses'  => $project->statuses()
@@ -40,6 +57,15 @@ class KanbanStatusController extends Controller
         }
 
         KanbanStatus::create([
+            'projectId'     => $project->id,
+            'key'           => $key,
+            'label'         => $req->label,
+            'color_bg'      => $req->color_bg ?? '#e9ecef',
+            'color_border'  => $req->color_border ?? '#bfbfbf',
+            'order'         => $project->statuses()->count(),
+        ]);
+
+        KanbanStatus::createLog([
             'projectId'     => $project->id,
             'key'           => $key,
             'label'         => $req->label,

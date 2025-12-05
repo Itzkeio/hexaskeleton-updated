@@ -7,10 +7,29 @@ use App\Models\KanbanLog;
 use App\Models\Projects;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use App\Services\RbacService;
+use Illuminate\Support\Facades\Auth;
 
 class KanbanLogController extends Controller
 {
+
+     protected $rbacService;
+
+    public function __construct(RbacService $rbacService)
+    {
+        $this->rbacService = $rbacService;
+    }
+    
     public function index($projectId){
+
+          // Cek akses RBAC
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.kanbanLogs');
+
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
+
         $project = Projects::findOrFail($projectId);
         return view('project-mgt.kanban.kanban-logs', compact('project'));
     }

@@ -9,16 +9,31 @@ use App\Models\Projects;
 use App\Models\KanbanFile;
 use App\Models\KanbanLog;
 use Carbon\Carbon;
+use App\Services\RbacService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 
 class KanbanController extends Controller
 {
+
+    protected $rbacService;
+
+    public function __construct(RbacService $rbacService)
+    {
+        $this->rbacService = $rbacService;
+    }
+
     /* ============================================================
         KANBAN INDEX
     ============================================================ */
     public function index(Request $request, Projects $project)
     {
+         $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.kanban');
+
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
         $project->load([
             'kanban' => function ($query) {
                 $query->with([
@@ -40,6 +55,13 @@ class KanbanController extends Controller
     ============================================================ */
     private function uploadFiles(Request $request, $projectId, $kanbanId = null, $subtaskId = null)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'kanban.uploadFiles')) {
+            return $this->denyAccess($request);
+        }
+
         if (!$request->hasFile('files')) return;
 
         foreach ($request->file('files') as $file) {
@@ -76,6 +98,13 @@ class KanbanController extends Controller
     ============================================================ */
     public function store(Request $request, Projects $project)
 {
+    $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'kanban.create')) {
+            return $this->denyAccess($request);
+        }
+
     $request->validate([
         'title' => 'required',
         'priority' => 'required|in:low,normal,high,urgent',
@@ -130,6 +159,13 @@ class KanbanController extends Controller
     ============================================================ */
     public function update(Request $request, Projects $project, Kanban $kanban)
     {
+        $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'kanban.update')) {
+            return $this->denyAccess($request);
+        }
+
         if ($kanban->projectId !== $project->id) {
             return response()->json(['success' => false], 403);
         }
@@ -178,6 +214,7 @@ class KanbanController extends Controller
     ============================================================ */
     public function destroy(Projects $project, Kanban $kanban)
     {
+        
         if ($kanban->projectId !== $project->id) {
             return response()->json(['success' => false], 403);
         }
@@ -250,6 +287,13 @@ class KanbanController extends Controller
     ============================================================ */
     public function updateStatus(Request $request, Projects $project)
 {
+    $userId = Auth::user()->id;
+
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'kanban.updateStatus')) {
+            return $this->denyAccess($request);
+        }
+
     $request->validate([
         'id' => 'required',
         'status' => 'required|string',
