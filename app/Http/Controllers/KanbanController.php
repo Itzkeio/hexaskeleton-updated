@@ -239,27 +239,55 @@ class KanbanController extends Controller
         MOVE TASK
     ============================================================ */
     public function updateStatus(Request $request, Projects $project)
-    {
-        $request->validate(['id' => 'required', 'status' => 'required']);
+{
+    $request->validate([
+        'id' => 'required',
+        'status' => 'required|string',
+    ]);
 
-        $task = Kanban::where('id', $request->id)
-            ->where('projectId', $project->id)
-            ->first();
+    // 🔍 Cek apakah status benar-benar milik project ini
+    $status = \App\Models\KanbanStatus::where('projectId', $project->id)
+        ->where('key', $request->status)
+        ->first();
 
-        $oldStatus = $task->status;
-
-        $task->update(['status' => $request->status]);
-
-        KanbanLog::createLog([
-            'projectId'   => $project->id,
-            'kanbanId'    => $task->id,
-            'action'      => 'MOVE',
-            'entity_type' => 'KANBAN',
-            'description' => "Moved task '{$task->title}' from {$oldStatus} to {$request->status}",
-            'old_values'  => ['status' => $oldStatus],
-            'new_values'  => ['status' => $request->status],
-        ]);
-
-        return response()->json(['success' => true]);
+    if (!$status) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Invalid status for this project'
+        ], 422);
     }
+
+    // 🔍 Ambil task
+    $task = Kanban::where('id', $request->id)
+        ->where('projectId', $project->id)
+        ->firstOrFail();
+
+    $oldStatus = $task->status;
+
+    // 🔄 Update task ke status baru
+    $task->update([
+        'status' => $status->key,
+    ]);
+
+    // 📝 Log
+    KanbanLog::createLog([
+        'projectId'   => $project->id,
+        'kanbanId'    => $task->id,
+        'action'      => 'MOVE',
+        'entity_type' => 'KANBAN',
+        'description' => "Moved task '{$task->title}' from {$oldStatus} to {$status->key}",
+        'old_values'  => ['status' => $oldStatus],
+        'new_values'  => ['status' => $status->key],
+    ]);
+
+    // 🎨 Kembalikan data warna untuk JS (agar badge berubah)
+    return response()->json([
+        'success' => true,
+        'status' => [
+            'label'        => $status->label,
+            'color_bg'     => $status->color_bg,
+            'color_border' => $status->color_border,
+        ]
+    ]);
+}
 }

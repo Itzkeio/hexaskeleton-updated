@@ -135,4 +135,10 @@ class Projects extends Model
         $totalProgress = $actualTimelines->sum('progress');
         return round($totalProgress / $actualTimelines->count());
     }
+
+    public function statuses()
+{
+    return $this->hasMany(KanbanStatus::class, 'projectId', 'id')->orderBy('order');
+}
+
 }

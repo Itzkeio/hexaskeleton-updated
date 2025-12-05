@@ -12,13 +12,18 @@
 
     <div class="p-2 pb-0">
         {{-- BADGE STATUS --}}
-        <div class="position-absolute top-0 end-0 m-1">
-            @if($task->status == 'todo')
-                <span class="badge bg-secondary">To Do</span>
-            @elseif($task->status == 'inprogress')
-                <span class="badge bg-primary">In Progress</span>
-            @else
-                <span class="badge bg-success">Finished</span>
+        <div class="position-absolute top-0 end-0 m-1 kanban-status-badge-wrapper">
+            @php
+            $statusObj = $project->statuses->firstWhere('key', $task->status);
+            @endphp
+
+            @if($statusObj)
+            <span class="badge kanban-status-badge"
+                style="background: {{ $statusObj->color_bg }}; 
+                     border: 1px solid {{ $statusObj->color_border }}; 
+                     color: #000;">
+                {{ $statusObj->label }}
+            </span>
             @endif
         </div>
 
@@ -29,26 +34,26 @@
                 <div class="small text-muted">{{ ucfirst($task->priority) }}</div>
 
                 @if($task->date_start && $task->date_end)
-                    <div class="small text-muted mt-1">
-                        <i class="ti ti-calendar-event"></i>
-                        {{ \Carbon\Carbon::parse($task->date_start)->format('d M') }} -
-                        {{ \Carbon\Carbon::parse($task->date_end)->format('d M Y') }}
-                    </div>
+                <div class="small text-muted mt-1">
+                    <i class="ti ti-calendar-event"></i>
+                    {{ \Carbon\Carbon::parse($task->date_start)->format('d M') }} -
+                    {{ \Carbon\Carbon::parse($task->date_end)->format('d M Y') }}
+                </div>
                 @endif
 
                 @if($task->duration)
-                    <div class="small mt-1">
-                        <span class="badge bg-info-subtle text-info border border-info">
-                            <i class="ti ti-clock"></i> {{ $task->duration }} hari
-                        </span>
-                    </div>
+                <div class="small mt-1">
+                    <span class="badge bg-info-subtle text-info border border-info">
+                        <i class="ti ti-clock"></i> {{ $task->duration }} hari
+                    </span>
+                </div>
                 @endif
 
                 @if($task->notes)
-                    <div class="small text-muted mt-1">
-                        <i class="ti ti-note"></i>
-                        {{ \Illuminate\Support\Str::limit($task->notes, 80) }}
-                    </div>
+                <div class="small text-muted mt-1">
+                    <i class="ti ti-note"></i>
+                    {{ \Illuminate\Support\Str::limit($task->notes, 80) }}
+                </div>
                 @endif
             </div>
 

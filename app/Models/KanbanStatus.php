@@ -4,41 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class KanbanStatus extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $table = 'kanban_status';
+    protected $table = 'kanban_statuses';
 
-    public $incrementing = false;
-    protected $keyType = 'string';
+    /** BIARKAN DEFAULT (auto increment) */
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
-        'id',
         'projectId',
-        'name',
-        'color',
+        'key',
+        'label',
+        'color_bg',
+        'color_border',
         'order',
-        'is_default',
     ];
 
     protected $casts = [
-        'is_default' => 'boolean',
         'order' => 'integer',
     ];
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (!$model->id) {
-                $model->id = (string) Str::uuid();
-            }
-        });
-    }
 
     /** Relasi ke Project */
     public function project()
@@ -46,15 +35,15 @@ class KanbanStatus extends Model
         return $this->belongsTo(Projects::class, 'projectId', 'id');
     }
 
-    /** Relasi ke Kanban tasks */
+    /** Relasi ke Task */
     public function kanbans()
     {
-        return $this->hasMany(Kanban::class, 'status', 'id');
+        return $this->hasMany(Kanban::class, 'status', 'key');
     }
 
     /** Relasi ke Subtasks */
     public function subtasks()
     {
-        return $this->hasMany(Subtask::class, 'status', 'id');
+        return $this->hasMany(Subtask::class, 'status', 'key');
     }
 }

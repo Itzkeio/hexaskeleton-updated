@@ -7,77 +7,107 @@ $priorityClass = [
 ];
 @endphp
 
-<div class="container-fluid px-2 py-3">
+<div class="kanban-wrapper px-2 py-3">
+
+    {{-- ROOT untuk JS (boleh id sama, nanti JS cari yang visible) --}}
+    <div id="kanban-root"
+         data-project-id="{{ $project->id }}"
+         style="display:none;"></div>
+
     {{-- HEADER --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold">Kanban — {{ $project->name }}</h5>
+        <h5 class="fw-bold mb-0">Kanban — {{ $project->name }}</h5>
 
         <div class="d-flex gap-2">
-            <a href="{{ route('kanban.logs.index', ['project' => $project->id]) }}"
-               class="btn btn-light btn-sm border">
-                <i class="ti ti-history"></i> Logs
+            {{-- Manage Status --}}
+            <a href="{{ route('kanban.status.index', $project->id) }}"
+               class="btn btn-secondary btn-sm border">
+                <i class="ti ti-settings me-1"></i> Status
             </a>
 
-            <button
-                class="btn btn-primary btn-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#createKanbanModal-{{ $project->id }}">
-                <i class="ti ti-plus me-1"></i>Tambah Progress
+            {{-- Logs --}}
+            <a href="{{ route('kanban.logs.index', $project->id) }}"
+               class="btn btn-light btn-sm border">
+                <i class="ti ti-history me-1"></i> Logs
+            </a>
+
+            {{-- Tambah Task --}}
+            <button class="btn btn-primary btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#createKanbanModal-{{ $project->id }}">
+                <i class="ti ti-plus me-1"></i> Progress
             </button>
         </div>
     </div>
 
-    {{-- SUCCESS/ERROR MESSAGE --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{-- SUCCESS / ERROR --}}
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show">
             {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    {{-- KANBAN BOARD --}}
-    <div class="row g-3" id="kanban-board">
-        {{-- ROOT UNTUK JS --}}
-        <div id="kanban-root" data-project-id="{{ $project->id }}" style="display:none;"></div>
+    {{-- BOARD --}}
+    <div class="row g-3 kanban-board" id="kanban-board-{{ $project->id }}">
 
-        {{-- LOOP COLUMNS --}}
-        @foreach (['todo' => 'To Do', 'inprogress' => 'In Progress', 'finished' => 'Finished'] as $statusKey => $label)
+        {{-- JIKA BELUM ADA STATUS --}}
+        @if (($project->statuses ?? collect())->count() === 0)
+            <div class="col-12">
+                <div class="alert alert-info border">
+                    Belum ada status. Tambahkan status di menu <b>Status</b>.
+                </div>
+            </div>
+        @endif
+
+        {{-- LOOP STATUS --}}
+        @foreach ($project->statuses as $status)
             <div class="col-md-4">
-                <div class="card shadow-sm">
-                    {{-- HEADER --}}
-                    <div class="card-header fw-bold
-                        @if($statusKey === 'todo') bg-secondary-subtle
-                        @elseif($statusKey === 'inprogress') bg-primary-subtle
-                        @else bg-success-subtle @endif">
-                        {{ $label }}
+                <div class="card shadow-sm h-100">
+
+                    {{-- Header status --}}
+                    <div class="card-header fw-bold"
+                         style="background: {{ $status->color_bg }};
+                                border-bottom: 2px solid {{ $status->color_border }}">
+                        {{ $status->label }}
                     </div>
 
-                    {{-- BODY --}}
-                    <div class="card-body" id="{{ $statusKey }}-{{ $project->id }}">
-                        @foreach($project->kanban->where('status', $statusKey) as $task)
+                    {{-- Body status --}}
+                    <div class="card-body kanban-column"
+                         id="{{ $status->key }}-{{ $project->id }}"
+                         data-status="{{ $status->key }}"
+                         data-project-id="{{ $project->id }}">
+
+                        {{-- Tasks --}}
+                        @forelse ($project->kanban->where('status', $status->key) as $task)
                             @include('project-mgt.kanban.partials.task-card', [
-                                'task'          => $task,
-                                'project'       => $project,
-                                'priorityClass' => $priorityClass,
+                                'task' => $task,
+                                'project' => $project,
+                                'priorityClass' => $priorityClass
                             ])
-                        @endforeach
+                        @empty
+                            <div class="text-muted small"></div>
+                        @endforelse
                     </div>
+
                 </div>
             </div>
         @endforeach
-    </div> {{-- /#kanban-board --}}
-</div> {{-- /.container-fluid --}}
 
-{{-- CREATE KANBAN (project-level) --}}
+    </div> {{-- /kanban-board --}}
+</div>
+
+{{-- Create Task Modal --}}
 @include('project-mgt.kanban.modals.create-task-modal', ['project' => $project])
 
+{{-- JS --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="{{ asset('js/kanban.js') }}"></script>
 <link rel="stylesheet" href="{{ asset('css/kanban.css') }}">

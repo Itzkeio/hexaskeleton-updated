@@ -12,6 +12,7 @@ use App\Http\Controllers\TimelineController;
 use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\KanbanLogController;
+use App\Http\Controllers\KanbanStatusController;
 
 
 /*
@@ -98,10 +99,10 @@ Route::delete('/projects/{project}/kanban/{kanban}',
     [KanbanController::class, 'destroy']
 )->name('kanban.delete');
 
-// Drag & Drop update status
-Route::post('/projects/{project}/kanban/status', 
+// 🔁 DRAG & DROP update status (URL baru, tidak tabrakan)
+Route::post('/projects/{project}/kanban/task-status',
     [KanbanController::class, 'updateStatus']
-)->name('kanban.status.update');
+)->name('kanban.task-status.update');
 
 Route::delete('/projects/{project}/kanban/file/{file}', 
     [KanbanController::class, 'destroyFile'])
@@ -139,6 +140,35 @@ Route::post('/projects/{project}/kanban/{kanban}/subtasks/{subtask}/toggle-statu
     [SubtaskController::class,'toggleStatus'])
     ->name('subtask.toggle.status');
 
+    // Halaman manage status
+Route::get('/projects/{project}/kanban/status',
+    [KanbanStatusController::class, 'index'])
+    ->name('kanban.status.index');
+
+// Create status
+Route::post('/projects/{project}/kanban/status',
+    [KanbanStatusController::class, 'store'])
+    ->name('kanban.status.store');
+
+// Update status
+Route::put('/projects/{project}/kanban/status/{status}',
+    [KanbanStatusController::class, 'update'])
+    ->name('kanban.status.update');
+
+// Delete (soft delete)
+Route::delete('/projects/{project}/kanban/status/{status}',
+    [KanbanStatusController::class, 'destroy'])
+    ->name('kanban.status.delete');
+
+// Restore status
+Route::post('/projects/{project}/kanban/status/{id}/restore',
+    [KanbanStatusController::class, 'restore'])
+    ->name('kanban.status.restore');
+
+// Reorder status
+Route::post('/projects/{project}/kanban/status-order',
+    [KanbanStatusController::class, 'updateOrder'])
+    ->name('kanban.status.order');
 
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'doLogin'])->name('doLogin');

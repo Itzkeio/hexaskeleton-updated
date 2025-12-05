@@ -19,19 +19,19 @@ class Kanban extends Model
     protected $appends = ['pic', 'pic_name'];
 
     protected $fillable = [
-    'id',
-    'projectId',
-    'title',
-    'description',
-    'notes',
-    'priority',
-    'picType',
-    'picId',
-    'status',
-    'date_start',
-    'date_end',
-    'duration',
-];
+        'id',
+        'projectId',
+        'title',
+        'description',
+        'notes',
+        'priority',
+        'picType',
+        'picId',
+        'status',
+        'date_start',
+        'date_end',
+        'duration',
+    ];
 
 
     protected $dates = ['deleted_at'];
@@ -79,36 +79,40 @@ class Kanban extends Model
 //         ->where('groups.id', '!=', 'groups.id'); // Trick: Always false
 // }
 
-/**
- * ✅ HELPER: Get PIC name safely
- */
-public function getPicAttribute()
-{
-    if (empty($this->picId) || !isset($this->picType)) {
-        return null;
-    }
-
-    // Cache result
-    if (!isset($this->relations['pic'])) {
-        if ($this->picType === 'individual' && Str::isUuid($this->picId)) {
-            $this->setRelation('pic', \App\Models\User::find($this->picId));
-        } elseif ($this->picType === 'group' && Str::isUuid($this->picId)) {
-            $this->setRelation('pic', \App\Models\Groups::find($this->picId));
-        } else {
-            $this->setRelation('pic', null);
+    /**
+     * ✅ HELPER: Get PIC name safely
+     */
+    public function getPicAttribute()
+    {
+        if (empty($this->picId) || !isset($this->picType)) {
+            return null;
         }
+
+        // Cache result
+        if (!isset($this->relations['pic'])) {
+            if ($this->picType === 'individual' && Str::isUuid($this->picId)) {
+                $this->setRelation('pic', \App\Models\User::find($this->picId));
+            } elseif ($this->picType === 'group' && Str::isUuid($this->picId)) {
+                $this->setRelation('pic', \App\Models\Groups::find($this->picId));
+            } else {
+                $this->setRelation('pic', null);
+            }
+        }
+
+        return $this->relations['pic'];
     }
 
-    return $this->relations['pic'];
-}
+    /**
+     * Get nama PIC
+     */
+    public function getPicNameAttribute()
+    {
+        $pic = $this->pic;
+        return $pic ? $pic->name : '-';
+    }
 
-/**
- * Get nama PIC
- */
-public function getPicNameAttribute()
-{
-    $pic = $this->pic;
-    return $pic ? $pic->name : '-';
+    public function statusInfo()
+    {
+        return $this->belongsTo(KanbanStatus::class, 'status', 'key');
+    }
 }
-}
-

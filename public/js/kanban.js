@@ -6,50 +6,47 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ||
         "";
 
-    function getProjectId() {
-    const $visibleRoot = $('.project-data:visible').find('#kanban-root');
-    if ($visibleRoot.length) {
-        return $visibleRoot.attr('data-project-id') || $visibleRoot.data('project-id') || null;
+     function getProjectId() {
+        // 1) cari semua kanban-root (1 per tab)
+        const roots = document.querySelectorAll('#kanban-root');
+
+        for (const root of roots) {
+            if (root.offsetParent !== null) {  // visible
+                return root.dataset.projectId;
+            }
+        }
+
+        // 2) fallback: tab active
+        const activeRoot = document.querySelector('.tab-pane.active #kanban-root');
+        if (activeRoot) return activeRoot.dataset.projectId;
+
+        // 3) fallback terakhir (single view)
+        return document.querySelector('#kanban-root')?.dataset.projectId || null;
     }
 
-    const $activeTabRoot = $('.tab-pane.active').find('#kanban-root');
-    if ($activeTabRoot.length) {
-        return $activeTabRoot.attr('data-project-id') || $activeTabRoot.data('project-id') || null;
-    }
-
-    const $root = $('#kanban-root');
-    if ($root.length) {
-        return $root.attr('data-project-id') || $root.data('project-id') || null;
-    }
-
-    const match = window.location.pathname.match(/\/projects\/(\d+)/);
-    if (match) return match[1];
-
-    return null;
-}
-
-
-    let isDragging = false;
-    const statuses = ["todo", "inprogress", "finished"];
-
+    /* ----------------------------------------
+        TOAST
+    ---------------------------------------- */
     function showToast(message, type = "success") {
         const old = document.getElementById("kanban-toast");
         if (old) old.remove();
-        const t = document.createElement("div");
-        t.id = "kanban-toast";
-        t.className = `alert alert-${
-            type === "success" ? "success" : "danger"
-        } position-fixed top-0 end-0 m-3 shadow-lg`;
-        t.style.cssText =
-            "z-index:9999; min-width:250px; animation: slideIn 0.25s ease-out;";
-        t.innerHTML = `<div class="d-flex align-items-center"><i class="ti ti-${
-            type === "success" ? "check" : "alert-circle"
-        } me-2"></i><span>${message}</span></div>`;
-        document.body.appendChild(t);
+
+        const el = document.createElement("div");
+        el.id = "kanban-toast";
+        el.className = `alert alert-${type} position-fixed top-0 end-0 m-3 shadow`;
+        el.style.cssText = "z-index:9999; animation: fadeIn .25s;";
+        el.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="ti ti-${type === "success" ? "check" : "alert-circle"} me-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        document.body.appendChild(el);
+
         setTimeout(() => {
-            t.style.animation = "slideOut 0.25s ease-out";
-            setTimeout(() => t.remove(), 250);
-        }, 3000);
+            el.style.animation = "fadeOut .25s";
+            setTimeout(() => el.remove(), 250);
+        }, 2500);
     }
 
     function goToKanbanTab() {
@@ -61,114 +58,97 @@ document.addEventListener("DOMContentLoaded", () => {
         if (tab) tab.click();
     }
 
-    // ================================
-    //      SORT & DRAG & STATUS
-    // ================================
-    function sortColumnByPriority(column) {
-        const priorityOrder = {
-            urgent: 0,
-            high: 1,
-            normal: 2,
-            low: 3,
-        };
-        let cards = Array.from(column.children);
-        cards.sort(
-            (a, b) =>
-                (priorityOrder[a.dataset.priority] ?? 99) -
-                (priorityOrder[b.dataset.priority] ?? 99)
-        );
-        cards.forEach((c) => column.appendChild(c));
-    }
+     /* ----------------------------------------
+        UPDATE BADGE STATUS DI CARD
+    ---------------------------------------- */
+    function updateCardBadge(card, statusMeta) {
+        console.log("Update badge:", card, statusMeta);
 
-    function updateCardBadge(card, status) {
-        const badgeContainer = card.querySelector(
-            ".position-absolute.top-0.end-0.m-1"
-        );
-        if (!badgeContainer) return;
-        let html = "";
-        if (status === "todo")
-            html = '<span class="badge bg-secondary">To Do</span>';
-        else if (status === "inprogress")
-            html = '<span class="badge bg-primary">In Progress</span>';
-        else if (status === "finished")
-            html = '<span class="badge bg-success">Finished</span>';
-        badgeContainer.innerHTML = html;
-    }
+        let wrapper = card.querySelector(".position-absolute.top-0.end-0.m-1");
+        if (!wrapper) return;
 
-   function initSortableColumns() {
-    // Cari semua kolom kanban yang ada di DOM (untuk semua project)
-    const cols = Array.from(document.querySelectorAll(
-        '[id^="todo-"], [id^="inprogress-"], [id^="finished-"]'
-    ));
+        wrapper.innerHTML = "";
 
-    if (!cols.length) return;
+        const badge = document.createElement("span");
+        badge.className = "badge";
+        badge.textContent = statusMeta.label ?? statusMeta.key ?? "";
 
-    cols.forEach((col) => {
-        // Jika sudah pernah di-init, skip (data attribute di-clear otomatis kalau DOM diganti)
-        if (col.dataset.sortableInit === "1") return;
-
-        // ambil status & projectId dari id (format: status-projectId)
-        const m = col.id.match(/^(todo|inprogress|finished)-(.+)$/);
-        if (!m) return;
-        const status = m[1];
-        const projectId = m[2];
-
-        // pastikan children di-sort by priority saat inisialisasi
-        try {
-            sortColumnByPriority(col);
-        } catch (err) {
-            console.warn("sortColumnByPriority error:", err);
+        if (statusMeta.color_bg) {
+            badge.style.background = statusMeta.color_bg;
+        }
+        if (statusMeta.color_border) {
+            badge.style.border = `1px solid ${statusMeta.color_border}`;
         }
 
-        // inisialisasi Sortable untuk kolom ini
-        new Sortable(col, {
-            group: "kanban-project-" + projectId,
-            animation: 200,
-            ghostClass: "sortable-ghost",
-            dragClass: "sortable-drag",
-            onStart() {
-                isDragging = true;
-            },
-            onEnd() {
-                isDragging = false;
-            },
-            onAdd(evt) {
-                const card = evt.item;
-                const id = card.dataset.id;
-                const newStatus = status; // status berasal dari kolom ini
-                // kirim request ke server
-                fetch(`/projects/${projectId}/kanban/status`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": csrf,
-                        Accept: "application/json",
-                    },
-                    body: JSON.stringify({ id, status: newStatus }),
-                })
-                    .then((r) => r.json())
-                    .then((res) => {
+        badge.style.color = "#000";
+        wrapper.appendChild(badge);
+    }
+
+    /* ----------------------------------------
+        SORTABLE DRAG & DROP
+    ---------------------------------------- */
+    function initSortableColumns() {
+        const cols = document.querySelectorAll(".kanban-column");
+        if (!cols.length) return;
+
+        cols.forEach(col => {
+            if (col.dataset.sortableInit === "1") return;
+
+            const newStatus = col.dataset.status;
+            const projectId = col.dataset.projectId;
+
+            if (!projectId) return;
+
+            new Sortable(col, {
+                group: "kanban-" + projectId,
+                animation: 200,
+                ghostClass: "sortable-ghost",
+                dragClass: "sortable-drag",
+
+                onStart() { isDragging = true; },
+                onEnd() { isDragging = false; },
+
+                onAdd(evt) {
+                    const card = evt.item;
+                    const taskId = card.dataset.id;
+
+                    fetch(`/projects/${projectId}/kanban/task-status`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": csrf,
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            status: newStatus
+                        }),
+                    })
+                    .then(r => r.json())
+                    .then(res => {
                         if (res.success) {
-                            // update tampilan kartu & urutkan ulang
-                            updateCardBadge(card, newStatus);
-                            sortColumnByPriority(col);
-                            showToast("Status berhasil diupdate!", "success");
+                            console.log("Update success:", res);
+                            card.dataset.status = newStatus;
+
+                            if (res.status) {
+                                updateCardBadge(card, res.status);
+                            }
+
+                            showToast("Status updated!", "success");
                         } else {
-                            showToast("Gagal mengupdate status!", "danger");
+                            showToast("Gagal update status", "danger");
                         }
                     })
-                    .catch((err) => {
+                    .catch(err => {
                         console.error(err);
-                        showToast("Error update status", "danger");
+                        showToast("Error update status!", "danger");
                     });
-            },
+                }
+            });
+
+            col.dataset.sortableInit = "1";
         });
-
-        // tandai sudah di-init supaya tidak dobel init (akan hilang jika DOM diganti)
-        col.dataset.sortableInit = "1";
-    });
-}
-
+    }
 
     // ================================
     //        HIGHLIGHT OVERDUE
