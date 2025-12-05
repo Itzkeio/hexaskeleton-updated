@@ -1,6 +1,7 @@
 <div class="modal fade" id="createKanbanModal-{{ $project->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form
+            id="createKanbanForm"
             action="{{ route('kanban.store', $project->id) }}"
             method="POST"
             class="modal-content"
@@ -41,6 +42,17 @@
                         class="form-control bg-light"
                         value="{{ $project->pic_name }}" disabled>
                 </div>
+                <div class="mb-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" required>
+                        @foreach ($project->statuses as $status)
+                        <option value="{{ $status->key }}">
+                            {{ $status->label }}
+                        </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="mb-2">
                     <label class="form-label">Priority</label>
                     <select name="priority" class="form-select">

@@ -75,45 +75,55 @@ class KanbanController extends Controller
         CREATE TASK
     ============================================================ */
     public function store(Request $request, Projects $project)
-    {
-        $request->validate([
-            'title' => 'required',
-            'priority' => 'required|in:low,normal,high,urgent',
-            'files.*' => 'nullable|file|max:10240',
+{
+    $request->validate([
+        'title' => 'required',
+        'priority' => 'required|in:low,normal,high,urgent',
+        'files.*' => 'nullable|file|max:10240',
+    ]);
+
+    $duration = ($request->date_start && $request->date_end)
+        ? Carbon::parse($request->date_start)->diffInDays($request->date_end)
+        : null;
+
+    $task = Kanban::create([
+        'id'         => Str::uuid(),
+        'projectId'  => $project->id,
+        'title'      => $request->title,
+        'description'=> $request->description,
+        'notes'      => $request->notes,
+        'priority'   => $request->priority,
+        'picType'    => $project->picType,
+        'picId'      => $project->picId,
+        'date_start' => $request->date_start,
+        'date_end'   => $request->date_end,
+        'duration'   => $duration,
+        'status' => $request->status ?? 'todo',
+    ]);
+
+    $this->uploadFiles($request, $project->id, $task->id);
+
+    KanbanLog::createLog([
+        'projectId'   => $project->id,
+        'kanbanId'    => $task->id,
+        'action'      => 'CREATE',
+        'entity_type' => 'KANBAN',
+        'description' => "Created task '{$task->title}'",
+        'new_values'  => $task->toArray(),
+    ]);
+
+    // 🔥 Jika request AJAX → kirim JSON
+    if ($request->ajax()) {
+        return response()->json([
+            'success' => true,
+            'task'    => $task,
         ]);
-
-        $duration = ($request->date_start && $request->date_end)
-            ? Carbon::parse($request->date_start)->diffInDays($request->date_end)
-            : null;
-
-        $task = Kanban::create([
-            'id'         => Str::uuid(),
-            'projectId'  => $project->id,
-            'title'      => $request->title,
-            'description' => $request->description,
-            'notes'      => $request->notes,
-            'priority'   => $request->priority,
-            'picType'    => $project->picType,
-            'picId'      => $project->picId,
-            'date_start' => $request->date_start,
-            'date_end'   => $request->date_end,
-            'duration'   => $duration,
-            'status'     => 'todo',
-        ]);
-
-        $this->uploadFiles($request, $project->id, $task->id, null);
-
-        KanbanLog::createLog([
-            'projectId'   => $project->id,
-            'kanbanId'    => $task->id,
-            'action'      => 'CREATE',
-            'entity_type' => 'KANBAN',
-            'description' => "Created task '{$task->title}'",
-            'new_values'  => $task->toArray(),
-        ]);
-
-        return redirect()->back()->with('success', 'Task berhasil ditambahkan.');
     }
+
+    // 🔥 Jika bukan AJAX → fallback redirect
+    return redirect()->back()->with('success', 'Task berhasil ditambahkan.');
+}
+
 
     /* ============================================================
         UPDATE TASK

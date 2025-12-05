@@ -1,10 +1,18 @@
 document.addEventListener("DOMContentLoaded", () => {
+    if (window.__KANBAN_JS_LOADED__) {
+    console.log("⚠️ Kanban JS sudah dimuat sebelumnya — dilewati");
+    return;
+}
+window.__KANBAN_JS_LOADED__ = true;
     // ================================
     //  GLOBAL HELPER & KONFIG
     // ================================
     const csrf =
         document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ||
         "";
+
+        let isDragging = false; // FIX: wajib ada
+
 
      function getProjectId() {
         // 1) cari semua kanban-root (1 per tab)
@@ -592,7 +600,67 @@ document.addEventListener("DOMContentLoaded", () => {
         "submit",
         async function (e) {
             const form = e.target;
+            
+/* ============================================================
+       CREATE NEW TASK  (PERBAIKAN)
+    ============================================================ */
+    if (form.id === "createKanbanForm") {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (isSubmitting) return;
+        isSubmitting = true;
 
+        const fd = new FormData(form);
+        const projectId = getProjectId();
+
+        try {
+            const resp = await fetch(`/projects/${projectId}/kanban`, {
+                method: "POST",
+                headers: {
+                    "X-CSRF-TOKEN": csrf,
+                    Accept: "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: fd,
+            });
+
+            const json = await resp.json();
+
+            if (json.success) {
+                showToast("Task berhasil ditambahkan!", "success");
+
+                // Tutup modal
+                const modalEl = document.getElementById(`createKanbanModal-${projectId}`);
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                form.reset();
+
+                // Bersihkan backdrop
+                document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+                document.body.classList.remove("modal-open");
+                document.body.style.removeProperty("overflow");
+                document.body.style.removeProperty("padding-right");
+
+                // Refresh board supaya task langsung muncul
+               // Refresh board supaya task langsung muncul
+                setTimeout(() => {
+                    window.location.reload();
+                    goToKanbanTab();
+                }, 800);
+            } else {
+                showToast(json.message || "Gagal menambah task", "danger");
+            }
+
+        } catch (err) {
+            console.error("Create task error:", err);
+            showToast("Error: gagal menambah task!", "danger");
+        } finally {
+            isSubmitting = false;
+        }
+
+        return;
+    }
             // EDIT TASK
             if (form.matches('form[id^="editKanbanForm-"]')) {
                 e.preventDefault();
@@ -801,7 +869,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         },
         {
-            capture: true,
+           
         }
     );
 
@@ -1273,6 +1341,76 @@ document.addEventListener("DOMContentLoaded", () => {
                 .classList.toggle("d-none", val !== "group");
         }
     });
+// // =====================================================================
+// // CREATE NEW TASK (AJAX) — FINAL & FIXED (NO DUPLICATE EVENT LISTENER)
+// // =====================================================================
+// if (!window.__KANBAN_CREATE_TASK_BOUND__) {
+
+//     window.__KANBAN_CREATE_TASK_BOUND__ = true;   // 🔒 Anti double binding
+
+//     document.addEventListener("submit", async (e) => {
+//         const form = e.target;
+
+//         // Pastikan form yang submit adalah form create task
+//         if (form.id !== "createKanbanForm") return;
+
+//         e.preventDefault(); // stop form default submit
+
+//         const fd = new FormData(form);
+//         const projectId = getProjectId();
+
+//         try {
+//             const resp = await fetch(`/projects/${projectId}/kanban`, {
+//                 method: "POST",
+//                 headers: {
+//                     "X-CSRF-TOKEN": csrf,
+//                     Accept: "application/json",
+//                     "X-Requested-With": "XMLHttpRequest",
+//                 },
+//                 body: fd,
+//             });
+
+//             const json = await resp.json();
+
+//             if (json.success) {
+//                 showToast("Task berhasil ditambahkan!", "success");
+
+//                 // Tutup modal
+//                 const modalEl = document.getElementById(`createKanbanModal-${projectId}`);
+//                 if (modalEl) {
+//                     const modal = bootstrap.Modal.getInstance(modalEl);
+//                     if (modal) modal.hide();
+//                 }
+
+//                 // Reset form setelah submit
+//                 form.reset();
+
+//                 // Hapus backdrop yang tersisa (jika ada)
+//                 document.querySelectorAll(".modal-backdrop").forEach(el => el.remove());
+//                 document.body.classList.remove("modal-open");
+//                 document.body.style.removeProperty("overflow");
+//                 document.body.style.removeProperty("padding-right");
+
+//                 // Refresh board supaya task baru muncul
+//                 setTimeout(() => {
+//                     if (typeof refreshKanbanBoard === "function") {
+//                         refreshKanbanBoard();
+//                     } else {
+//                         window.location.reload();
+//                     }
+//                 }, 200);
+
+//             } else {
+//                 showToast(json.message || "Gagal menambah task", "danger");
+//             }
+
+//         } catch (err) {
+//             console.error("Create Task Error:", err);
+//             showToast("Error: gagal menambah task!", "danger");
+//         }
+//     });
+// }
+
 
   // ================================
     //   INIT PERTAMA KALI
