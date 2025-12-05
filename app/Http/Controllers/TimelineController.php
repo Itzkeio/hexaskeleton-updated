@@ -11,20 +11,20 @@ use App\Services\RbacService;
 
 class TimelineController extends Controller
 {
-    protected $rbacService;
+    // protected $rbacService;
 
-    public function __construct(RbacService $rbacService)
-    {
-        $this->rbacService = $rbacService;
-    }
+    // public function __construct(RbacService $rbacService)
+    // {
+    //     $this->rbacService = $rbacService;
+    // }
    public function store(Request $request, $projectId)
     {
-        $userId = Auth::user()->id;
+        // $userId = Auth::user()->id;
 
-        // RBAC: cek akses membuat timeline
-        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-            return $this->denyAccess($request);
-        }
+        // // RBAC: cek akses membuat timeline
+        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+        //     return $this->denyAccess($request);
+        // }
 
         $project = Projects::findOrFail($projectId);
 
@@ -68,12 +68,12 @@ class TimelineController extends Controller
      */
     public function update(Request $request, $projectId, $timelineId)
     {
-        $userId = Auth::user()->id;
+        // $userId = Auth::user()->id;
 
-        // RBAC: cek akses edit timeline
-        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.update')) {
-            return $this->denyAccess($request);
-        }
+        // // RBAC: cek akses edit timeline
+        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.update')) {
+        //     return $this->denyAccess($request);
+        // }
 
         $project = Projects::findOrFail($projectId);
         $timeline = Timeline::where('projectId', $projectId)
@@ -118,12 +118,12 @@ class TimelineController extends Controller
      */
     public function destroy(Request $request, $projectId, $timelineId)
     {
-        $userId = Auth::user()->id;
+        // $userId = Auth::user()->id;
 
-        // RBAC: cek akses delete timeline
-        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.delete')) {
-            return $this->denyAccess($request);
-        }
+        // // RBAC: cek akses delete timeline
+        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.delete')) {
+        //     return $this->denyAccess($request);
+        // }
 
         $project = Projects::findOrFail($projectId);
         $timeline = Timeline::where('projectId', $projectId)
@@ -153,12 +153,12 @@ class TimelineController extends Controller
      */
     public function getGanttData($projectId)
     {
-        $userId = Auth::user()->id;
+        // $userId = Auth::user()->id;
 
-        // RBAC: cek akses melihat timeline gantt
-        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.view')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
+        // // RBAC: cek akses melihat timeline gantt
+        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.view')) {
+        //     return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        // }
 
         $project = Projects::with('actualTimelines')->findOrFail($projectId);
 

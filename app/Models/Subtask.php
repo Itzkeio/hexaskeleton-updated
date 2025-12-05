@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subtask extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $table = 'subtask';
-    use HasFactory;
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -19,35 +20,26 @@ class Subtask extends Model
         'kanbanId',
         'title',
         'description',
+        'priority',
+        'notes',
+        'status',
         'date_start',
         'date_end',
         'duration',
-        'priority',
-        'status',
     ];
 
-    // PERBAIKAN: Hapus cast date, biarkan sebagai string
-    protected $casts = [
-        // Jangan cast ke date, biarkan sebagai string
-        // 'date_start' => 'date',
-        // 'date_end' => 'date',
-    ];
-
-    /** Auto-generate UUID */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (!$model->id) {
-                $model->id = (string) Str::uuid();
-            }
-        });
-    }
+    protected $dates = ['deleted_at'];
 
     /** Relasi ke Kanban */
     public function kanban()
     {
         return $this->belongsTo(Kanban::class, 'kanbanId', 'id');
+    }
+
+    /** Relasi ke Files */
+    public function files()
+    {
+        return $this->hasMany(KanbanFile::class, 'subtaskId', 'id')
+            ->whereNull('deleted_at');
     }
 }

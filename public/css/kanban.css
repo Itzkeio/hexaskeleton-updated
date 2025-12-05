@@ -1,0 +1,64 @@
+.sortable-ghost {
+    opacity: 0.3;
+    background: #d0d0d0 !important;
+}
+
+.sortable-drag {
+    transform: rotate(2deg) scale(1.03);
+    transition: 0.15s ease;
+}
+
+.kanban-item {
+    padding-top: 28px !important;
+}
+
+.kanban-item [data-bs-toggle="collapse"] {
+    transition: all 0.3s ease;
+}
+
+.kanban-item [data-bs-toggle="collapse"]:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.kanban-item [data-bs-toggle="collapse"] .ti-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.kanban-item [data-bs-toggle="collapse"]:not(.collapsed) .ti-chevron-down {
+    transform: rotate(180deg);
+}
+
+.subtask-checkbox {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.kanban-item .bg-light:hover {
+    background-color: #e9ecef !important;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1
+    }
+
+    to {
+        transform: translateX(100%);
+        opacity: 0
+    }
+}
+

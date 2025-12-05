@@ -23,24 +23,24 @@ class ProjectController extends Controller
     }
 
     public function index(Request $request)
-{
-    // Cek akses RBAC
-    $userId = Auth::user()->id;
-    $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.projects');
+    {
+        // Cek akses RBAC
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.projects');
 
-    if (!$hasAccess) {
-        return view('access-denied');
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
+
+        // Ambil data projects
+        $projects = Projects::with(['version', 'timeline', 'versions'])
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $selectedProject = $projects->first();
+
+        return view('project-mgt.projects', compact('projects', 'selectedProject'));
     }
-
-    // Ambil data projects
-    $projects = Projects::with(['version', 'timeline', 'versions'])
-        ->orderBy('id', 'asc')
-        ->get();
-
-    $selectedProject = $projects->first();
-
-    return view('project-mgt.projects', compact('projects', 'selectedProject'));
-}
 
     public function search(Request $request)
     {
@@ -50,7 +50,7 @@ class ProjectController extends Controller
         if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
             return $this->denyAccess($request);
         }
-        
+
         $query = Projects::with(['version', 'timeline', 'versions']);
 
         if ($request->has('search') && $request->search != '') {
@@ -215,8 +215,7 @@ class ProjectController extends Controller
                     return back()->withErrors(['picUser' => 'Pilih user PIC untuk tipe individual.'])->withInput();
                 }
                 $picId = $validated['picUser'];
-
-                if ($oldPicType === 'group') {
+                if ($oldPicType === 'group' && $oldPicId && strlen($oldPicId) > 20) {
                     $this->deleteGroup($oldPicId);
                 }
             } else {
@@ -522,7 +521,7 @@ class ProjectController extends Controller
         if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
             return $this->denyAccess($request);
         }
-        
+
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
             ->where('id', $versionId)
@@ -582,7 +581,7 @@ class ProjectController extends Controller
                 $this->deleteGroup($project->picId);
             }
 
-           DB::table('timeline')->where('projectId', $project->id)->delete();
+            DB::table('timeline')->where('projectId', $project->id)->delete();
             // Hapus semua versions
             Versions::where('projectId', $project->id)->delete();
 
@@ -603,7 +602,12 @@ class ProjectController extends Controller
 
     private function deleteGroup($groupId)
     {
-        DB::table('group_members')->where('group_id', $groupId)->delete();
+        if (!$groupId || !is_string($groupId)) {
+            // groupId invalid → jangan eksekusi apa pun
+            return;
+        }
+
+        DB::table('groups')->where('group_id', $groupId)->delete();
         Groups::where('id', $groupId)->delete();
     }
 }
