@@ -47,10 +47,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/log/audittrail', [LogController::class, 'index']);
     Route::get('/logs/audit-trail-data', [LogController::class, 'datatable'])->name('logs.datatable');
 
-    
-});
-
-Route::get('/menu/structure', [MenuController::class, 'getMenuStructure'])->name('menu.structure');
+    Route::get('/menu/structure', [MenuController::class, 'getMenuStructure'])->name('menu.structure');
 
 /* -------------------------
     PROJECT ROUTES (manual)
@@ -169,6 +166,9 @@ Route::post('/projects/{project}/kanban/status/{id}/restore',
 Route::post('/projects/{project}/kanban/status-order',
     [KanbanStatusController::class, 'updateOrder'])
     ->name('kanban.status.order');
+});
+
+
 
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'doLogin'])->name('doLogin');
