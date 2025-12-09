@@ -1,5 +1,9 @@
+@php
+    $statusObj = $project->statuses->firstWhere('key', $task->status);
+@endphp
+
 <div
-    class="card mb-2 shadow-sm border kanban-item position-relative {{ $priorityClass[$task->priority] ?? '' }}"
+    class="card mb-2 shadow-sm border kanban-item position-relative"
     data-id="{{ $task->id }}"
     data-title="{{ $task->title }}"
     data-description="{{ $task->description }}"
@@ -8,7 +12,13 @@
     data-date_start="{{ $task->date_start }}"
     data-date_end="{{ $task->date_end }}"
     data-duration="{{ $task->duration }}"
-    data-status="{{ $task->status }}">
+    data-status="{{ $task->status }}"
+    style="
+        background: {{ $statusObj->color_bg ?? '#ffffff' }};
+        border-color: {{ $statusObj->color_border ?? '#cccccc' }};
+    "
+>
+
 
     <div class="p-2 pb-0">
         {{-- BADGE STATUS --}}
@@ -61,19 +71,23 @@
             <div class="d-flex gap-1">
                 <button
                     type="button"
-                    class="btn btn-sm btn-outline-primary edit-btn"
+                    class="btn btn-outline-primary btn-sm p-0 d-flex align-items-center justify-content-center edit-btn"
+                    style="width:32px; height:32px;"
                     data-task-id="{{ $task->id }}">
-                    <i class="ti ti-edit" style="pointer-events:none;"></i>
+                    <i class="ti ti-edit"></i>
                 </button>
+
                 <button
                     type="button"
-                    class="btn btn-sm btn-outline-danger delete-task-btn"
+                    class="btn btn-outline-danger btn-sm p-0 d-flex align-items-center justify-content-center delete-task-btn"
+                    style="width:32px; height:32px;"
                     data-task-id="{{ $task->id }}"
                     data-bs-toggle="modal"
                     data-bs-target="#deleteKanbanModal-{{ $task->id }}">
-                    <i class="ti ti-trash" style="pointer-events:none;"></i>
+                    <i class="ti ti-trash"></i>
                 </button>
             </div>
+
         </div>
 
         {{-- TASK FILES (di card) --}}
