@@ -92,19 +92,6 @@ window.__KANBAN_JS_LOADED__ = true;
         wrapper.appendChild(badge);
     }
 
-    function updateCardColor(card, statusMeta) {
-    if (!statusMeta) return;
-
-    if (statusMeta.color_bg) {
-        card.style.background = statusMeta.color_bg;
-    }
-
-    if (statusMeta.color_border) {
-        card.style.borderColor = statusMeta.color_border;
-    }
-}
-
-
     /* ----------------------------------------
         SORTABLE DRAG & DROP
     ---------------------------------------- */
@@ -130,55 +117,41 @@ window.__KANBAN_JS_LOADED__ = true;
                 onEnd() { isDragging = false; },
 
                 onAdd(evt) {
-    const card = evt.item;
+                    const card = evt.item;
+                    const taskId = card.dataset.id;
 
-    const taskId = card.dataset.id;
+                    fetch(`/projects/${projectId}/kanban/task-status`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-CSRF-TOKEN": csrf,
+                            Accept: "application/json",
+                        },
+                        body: JSON.stringify({
+                            id: taskId,
+                            status: newStatus
+                        }),
+                    })
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.success) {
+                            console.log("Update success:", res);
+                            card.dataset.status = newStatus;
 
-    // === SIMPAN POSISI ASAL (rollback jika error) ===
-    const oldParent = evt.from;
-    const oldIndex = evt.oldIndex;
-    const newParent = evt.to;
+                            if (res.status) {
+                                updateCardBadge(card, res.status);
+                            }
 
-    fetch(`/projects/${projectId}/kanban/task-status`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": csrf,
-            Accept: "application/json",
-        },
-        body: JSON.stringify({
-            id: taskId,
-            status: newStatus
-        }),
-    })
-    .then(r => r.json())
-    .then(res => {
-        if (res.success) {
-            console.log("Update success:", res);
-            card.dataset.status = newStatus;
-
-            if (res.status) {
-                updateCardBadge(card, res.status);
-                updateCardColor(card, res.status);
-            }
-
-            showToast("Status updated!", "success");
-        } else {
-            // === ROLLBACK KE KOLOM ASAL ===
-            oldParent.insertBefore(card, oldParent.children[oldIndex]);
-            showToast("Gagal update status", "danger");
-        }
-    })
-    .catch(err => {
-        console.error(err);
-
-        // === ROLLBACK KALAU TERJADI ERROR ===
-        oldParent.insertBefore(card, oldParent.children[oldIndex]);
-
-        showToast("Error update status!", "danger");
-    });
-}
-
+                            showToast("Status updated!", "success");
+                        } else {
+                            showToast("Gagal update status", "danger");
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast("Error update status!", "danger");
+                    });
+                }
             });
 
             col.dataset.sortableInit = "1";
@@ -799,9 +772,19 @@ window.__KANBAN_JS_LOADED__ = true;
                         showToast("Subtask ditambahkan!", "success");
                         goToKanbanTab();
                         setTimeout(() => {
-                            window.location.reload();
-                            goToKanbanTab();
-                        }, 800);
+                            const editTaskModalEl =
+                                document.getElementById(
+                                    `editKanbanModal-${kanbanId}`
+                                );
+                            if (editTaskModalEl) {
+                                const editTaskModal =
+                                    bootstrap.Modal.getOrCreateInstance(
+                                        editTaskModalEl
+                                    );
+                                editTaskModal.show();
+                                loadSubtasks(kanbanId);
+                            }
+                        }, 150);
                     } else {
                         showToast("Gagal menambah subtask", "danger");
                     }
@@ -856,10 +839,7 @@ window.__KANBAN_JS_LOADED__ = true;
                         form.reset();
                         showToast("Subtask berhasil diupdate!", "success");
                         goToKanbanTab();
-                        setTimeout(() => {
-                            window.location.reload();
-                            goToKanbanTab();
-                        }, 800);
+
                         setTimeout(() => {
                             const editTaskModalEl =
                                 document.getElementById(

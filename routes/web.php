@@ -170,7 +170,6 @@ Route::post('/projects/{project}/kanban/status-order',
 
 
 
-
 Route::get('/auth/login', [AuthController::class, 'index'])->name('login');
 Route::post('/auth/login', [AuthController::class, 'doLogin'])->name('doLogin');
 Route::get('/auth/logout', [AuthController::class, 'logout'])->name('doLogout');

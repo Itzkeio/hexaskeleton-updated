@@ -17,20 +17,20 @@ class ProjectController extends Controller
 
     protected $rbacService;
 
-    // public function __construct(RbacService $rbacService)
-    // {
-    //     $this->rbacService = $rbacService;
-    // }
+    public function __construct(RbacService $rbacService)
+    {
+        $this->rbacService = $rbacService;
+    }
 
     public function index(Request $request)
     {
-        // // Cek akses RBAC
-        // $userId = Auth::user()->id;
-        // $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.projects');
+        // Cek akses RBAC
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.projects');
 
-        // if (!$hasAccess) {
-        //     return view('access-denied');
-        // }
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
 
         // Ambil data projects
         $projects = Projects::with(['version', 'timeline', 'versions'])
@@ -44,12 +44,12 @@ class ProjectController extends Controller
 
     public function search(Request $request)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
 
         $query = Projects::with(['version', 'timeline', 'versions']);
 
@@ -77,12 +77,12 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -305,12 +305,12 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk menambah version baru
     public function addVersion(Request $request, $id)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
 
         $project = Projects::with('versions')->findOrFail($id);
 
@@ -373,12 +373,12 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk edit version
     public function editVersion(Request $request, $projectId, $versionId)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
 
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
@@ -442,12 +442,12 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk delete version
     public function deleteVersion(Request $request, $projectId, $versionId)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
 
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)
@@ -515,12 +515,12 @@ class ProjectController extends Controller
     // ✨ NEW: Method untuk set version sebagai active
     public function setActiveVersion(Request $request, $projectId, $versionId)
     {
-        // $userId = Auth::user()->id;
+        $userId = Auth::user()->id;
 
-        // // RBAC: cek akses membuat timeline
-        // if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
-        //     return $this->denyAccess($request);
-        // }
+        // RBAC: cek akses membuat timeline
+        if (!$this->rbacService->userHasKeyAccess($userId, 'timeline.create')) {
+            return $this->denyAccess($request);
+        }
 
         $project = Projects::findOrFail($projectId);
         $version = Versions::where('projectId', $projectId)

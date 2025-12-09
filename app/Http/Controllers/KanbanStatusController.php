@@ -22,14 +22,14 @@ class KanbanStatusController extends Controller
      */
     public function index(Projects $project)
     {
-        //  // Cek akses RBAC
-        // // Cek akses RBAC
-        // $userId = Auth::user()->id;
-        // $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.kanbanStatus');
+         // Cek akses RBAC
+        // Cek akses RBAC
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.kanbanStatus');
 
-        // if (!$hasAccess) {
-        //     return view('access-denied');
-        // }
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
 
         return view('project-mgt.kanban.status.index', [
             'project'   => $project,

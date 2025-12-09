@@ -10,20 +10,20 @@ use Illuminate\Support\Facades\Auth;
 
 class LogController extends Controller
 {
-    // protected $rbacService;
+    protected $rbacService;
 
-    // public function __construct(RbacService $rbacService)
-    // {
-    //     $this->rbacService = $rbacService;
-    // }
+    public function __construct(RbacService $rbacService)
+    {
+        $this->rbacService = $rbacService;
+    }
 
     public function index()
     {
-        // $userId = Auth::user()->id;
-        // $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.audittrail');
-        // if (!$hasAccess) {
-        //     return view('access-denied');
-        // }
+        $userId = Auth::user()->id;
+        $hasAccess = $this->rbacService->userHasKeyAccess($userId, 'view.audittrail');
+        if (!$hasAccess) {
+            return view('access-denied');
+        }
 
         return view('logs.index');
     }
