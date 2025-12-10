@@ -84,15 +84,13 @@
                         <use xlink:href="#custom-box-1"></use>
                     </svg>
                 </li>
-                <li class="pc-item">
-                    <a href="/project-mgt/projects" class="pc-link">
-                        <span class="pc-micon">
-                            <svg class="pc-icon">
-                                <use xlink:href="#custom-document"></use>
-                            </svg>
-                        </span><span class="pc-mtext">Projects</span>
-                    </a>
-                </li>
+                    <li class="pc-item">
+                        <a href="/project-mgt/projects" class="pc-link">
+                            <span class="pc-micon">
+                                <i class="ti ti-folder"></i>
+                            </span><span class="pc-mtext">Projects</span>
+                        </a>
+                    </li>
                 <li class="pc-item">
                     <a href="/calendar-view" class="pc-link">
                         <span class="pc-micon">
@@ -107,3 +105,5 @@
     </div>
 </nav>
 <!-- [ Sidebar Menu ] end -->
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
