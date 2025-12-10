@@ -13,6 +13,7 @@ use App\Http\Controllers\KanbanController;
 use App\Http\Controllers\SubtaskController;
 use App\Http\Controllers\KanbanLogController;
 use App\Http\Controllers\KanbanStatusController;
+Use App\Http\Controllers\CalendarController;
 
 
 /*
@@ -166,6 +167,15 @@ Route::post('/projects/{project}/kanban/status/{id}/restore',
 Route::post('/projects/{project}/kanban/status-order',
     [KanbanStatusController::class, 'updateOrder'])
     ->name('kanban.status.order');
+
+    // Halaman kalender
+Route::get('/calendar-view', [CalendarController::class, 'calendarPage'])->name('calendar.index');
+
+Route::prefix('calendar')->group(function () {
+    Route::get('/pic/{picId}', [CalendarController::class, 'getProjectByPic']);
+    Route::get('/project/{id}', [CalendarController::class, 'getProjectDetail']);
+});
+
 });
 
 

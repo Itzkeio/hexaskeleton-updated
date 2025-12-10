@@ -124,6 +124,16 @@ class Projects extends Model
         return $this->hasMany(Kanban::class, 'projectId', 'id');
     }
 
+    public function getStartDateAttribute()
+    {
+        return $this->createdAt;
+    }
+
+    public function getEndDateAttribute()
+    {
+        return $this->finishedAt ?? $this->createdAt;
+    }
+
     public function getOverallProgress()
     {
         $actualTimelines = $this->actualTimelines;

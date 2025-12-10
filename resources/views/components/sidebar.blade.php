@@ -78,7 +78,7 @@
                         </span><span class="pc-mtext">Audit Trail</span>
                     </a>
                 </li>
-                 <li class="pc-item pc-caption">
+                <li class="pc-item pc-caption">
                     <label>Project Management</label>
                     <svg class="pc-icon">
                         <use xlink:href="#custom-box-1"></use>
@@ -93,6 +93,15 @@
                         </span><span class="pc-mtext">Projects</span>
                     </a>
                 </li>
+                <li class="pc-item">
+                    <a href="/calendar-view" class="pc-link">
+                        <span class="pc-micon">
+                            <i class="ti ti-calendar-month"></i>
+                        </span>
+                        <span class="pc-mtext">Calendar</span>
+                    </a>
+                </li>
+
             </ul>
         </div>
     </div>
