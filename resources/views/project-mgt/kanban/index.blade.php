@@ -53,6 +53,7 @@ $priorityClass = [
         </div>
     @endif
 
+
     {{-- BOARD --}}
     <div class="row g-3 kanban-board" id="kanban-board-{{ $project->id }}">
 
@@ -98,10 +99,34 @@ $priorityClass = [
     </div>{{-- /kanban-board --}}
 </div>{{-- /kanban-wrapper --}}
 
-{{-- ========================================== --}}
-{{--  FIX: MODAL DIPINDAH KE LUAR KANBAN WRAPPER --}}
-{{-- ========================================== --}}
+
+{{-- ========================================================== --}}
+{{--   FIX UTAMA: SEMUA MODAL DIPINDAH KE BAWAH SEPERTI INI     --}}
+{{-- ========================================================== --}}
+
+{{-- CREATE TASK --}}
 @include('project-mgt.kanban.modals.create-task-modal', ['project' => $project])
+
+{{-- ALL TASK MODALS --}}
+@foreach ($project->kanban as $task)
+
+    {{-- DELETE TASK --}}
+    @include('project-mgt.kanban.modals.delete-task-modal', ['task' => $task])
+
+    {{-- EDIT TASK --}}
+    @include('project-mgt.kanban.modals.edit-task-modal', [
+        'task' => $task,
+        'project' => $project
+    ])
+
+    {{-- ADD SUBTASK --}}
+    @include('project-mgt.kanban.modals.add-subtask-modal', ['task' => $task])
+
+    {{-- EDIT SUBTASK --}}
+    @include('project-mgt.kanban.modals.edit-subtask-modal', ['task' => $task])
+
+@endforeach
+
 
 {{-- JS --}}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>

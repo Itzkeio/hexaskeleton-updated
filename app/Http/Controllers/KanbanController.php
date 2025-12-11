@@ -78,6 +78,7 @@ class KanbanController extends Controller
                 'file_type'  => $file->getClientMimeType(),
                 'file_size'  => $file->getSize(),
                 'description' => $request->file_description ?? null,
+                
             ]);
 
             // LOG ← FIXED projectId
@@ -122,8 +123,8 @@ class KanbanController extends Controller
             'description' => $request->description,
             'notes'      => $request->notes,
             'priority'   => $request->priority,
-            'picType'    => $project->picType,
-            'picId'      => $project->picId,
+            'picType' => $project->picType,
+            'picId'   => $this->resolvePicId($project),
             'date_start' => $request->date_start,
             'date_end'   => $request->date_end,
             'duration'   => $duration,
@@ -187,8 +188,8 @@ class KanbanController extends Controller
             'description' => $request->description,
             'notes'       => $request->notes,
             'priority'    => $request->priority,
-            'picType'     => $project->picType,
-            'picId'       => $project->picId,
+            'picType' => $project->picType,
+            'picId'   => $this->resolvePicId($project),
             'date_start'  => $request->date_start,
             'date_end'    => $request->date_end,
             'duration'    => $duration,
@@ -345,4 +346,29 @@ class KanbanController extends Controller
             ]
         ]);
     }
+
+    private function resolvePicId(Projects $project)
+{
+    // Individual PIC → langsung return user ID
+    if ($project->picType === 'individual') {
+        return $project->picId;
+    }
+
+    // Group PIC → ambil anggota group
+    if ($project->picType === 'group') {
+
+        $members = \App\Models\GroupMember::where('group_id', $project->picId)
+            ->pluck('user_id');
+
+        if ($members->isEmpty()) {
+            // Jika group tidak punya anggota → fallback ke user login
+            return auth()->id();
+        }
+
+        // Gunakan anggota pertama sebagai PIC representative
+        return $members->first();
+    }
+
+    return auth()->id(); // fallback aman
+}
 }

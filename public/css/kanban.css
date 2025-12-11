@@ -6,6 +6,7 @@
 .sortable-drag {
     transform: rotate(2deg) scale(1.03);
     transition: 0.15s ease;
+     z-index: 10 !important;
 }
 
 .kanban-item {
@@ -61,13 +62,30 @@
         opacity: 0
     }
 }
+/* HANYA task + column yang butuh posisi dan z-index */
+.kanban-column,
+.kanban-item {
+    position: relative !important;
+    z-index: 1 !important;
+}
 
+/* wrapper TIDAK boleh punya stacking context */
+.kanban-wrapper,
+.kanban-board {
+    position: static !important;
+    z-index: auto !important;
+}
 
-/* 🔥 FIX: Paksa modal berada di atas backdrop */
+/* Modal harus paling depan */
 .modal {
-    z-index: 99999 !important;
+    z-index: 200000 !important;
 }
 
+/* Backdrop tetap di belakang modal */
 .modal-backdrop {
-    z-index: 9999 !important;
+    z-index: 150000 !important;
+    position: fixed !important; /* wajib agar tidak "nyangkut" di wrapper */
 }
+
+
+

@@ -1,5 +1,5 @@
 <div class="modal fade" id="editKanbanModal-{{ $task->id }}" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"">
         <form
             id="editKanbanForm-{{ $task->id }}"
             method="POST"

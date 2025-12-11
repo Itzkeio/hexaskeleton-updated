@@ -19,25 +19,21 @@
     "
 >
 
-
     <div class="p-2 pb-0">
-        {{-- BADGE STATUS --}}
-        <div class="position-absolute top-0 end-0 m-1 kanban-status-badge-wrapper">
-            @php
-            $statusObj = $project->statuses->firstWhere('key', $task->status);
-            @endphp
 
+        {{-- STATUS BADGE --}}
+        <div class="position-absolute top-0 end-0 m-1">
             @if($statusObj)
-            <span class="badge kanban-status-badge"
-                style="background: {{ $statusObj->color_bg }}; 
-                     border: 1px solid {{ $statusObj->color_border }}; 
-                     color: #000;">
-                {{ $statusObj->label }}
-            </span>
+                <span class="badge"
+                    style="background: {{ $statusObj->color_bg }};
+                           border: 1px solid {{ $statusObj->color_border }};
+                           color:#000;">
+                    {{ $statusObj->label }}
+                </span>
             @endif
         </div>
 
-        {{-- CARD CONTENT --}}
+        {{-- CONTENT --}}
         <div class="d-flex justify-content-between">
             <div class="flex-grow-1">
                 <span class="fw-semibold">{{ $task->title }}</span>
@@ -62,44 +58,35 @@
                 @if($task->notes)
                 <div class="small text-muted mt-1">
                     <i class="ti ti-note"></i>
-                    {{ \Illuminate\Support\Str::limit($task->notes, 80) }}
+                    {{ Str::limit($task->notes, 80) }}
                 </div>
                 @endif
             </div>
 
-            {{-- BUTTONS --}}
+            {{-- ACTION BUTTONS --}}
             <div class="d-flex gap-1">
-                <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm p-0 d-flex align-items-center justify-content-center edit-btn"
-                    style="width:32px; height:32px;"
+                <button type="button"
+                    class="btn btn-outline-primary btn-sm edit-btn"
+                    style="width:32px;height:32px;"
                     data-task-id="{{ $task->id }}">
                     <i class="ti ti-edit"></i>
                 </button>
 
-                <button
-                    type="button"
-                    class="btn btn-outline-danger btn-sm p-0 d-flex align-items-center justify-content-center delete-task-btn"
-                    style="width:32px; height:32px;"
-                    data-task-id="{{ $task->id }}"
+                <button type="button"
+                    class="btn btn-outline-danger btn-sm delete-task-btn"
+                    style="width:32px;height:32px;"
                     data-bs-toggle="modal"
                     data-bs-target="#deleteKanbanModal-{{ $task->id }}">
                     <i class="ti ti-trash"></i>
                 </button>
             </div>
-
         </div>
 
-        {{-- TASK FILES (di card) --}}
+        {{-- FILE LIST --}}
         @include('project-mgt.kanban.partials.task-files', ['task' => $task])
     </div>
 
-    {{-- SUBTASKS DROPDOWN + FILES --}}
+    {{-- SUBTASK LIST --}}
     @include('project-mgt.kanban.partials.subtasks-list', ['task' => $task])
 
-    {{-- MODALS UNTUK TASK INI --}}
-    @include('project-mgt.kanban.modals.delete-task-modal', ['task' => $task])
-    @include('project-mgt.kanban.modals.edit-task-modal', ['task' => $task, 'project' => $project])
-    @include('project-mgt.kanban.modals.add-subtask-modal', ['task' => $task])
-    @include('project-mgt.kanban.modals.edit-subtask-modal', ['task' => $task])
 </div>
