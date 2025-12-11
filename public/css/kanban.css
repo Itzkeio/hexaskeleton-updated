@@ -62,3 +62,14 @@
     }
 }
 
+.modal {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+}
+
+.modal-dialog {
+    margin: 0 auto !important;
+}
+
+

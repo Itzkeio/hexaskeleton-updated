@@ -44,6 +44,17 @@
                     </select>
                 </div>
                 <div class="mb-2">
+                    <label class="form-label">Status</label>
+                    <select
+                        name="status"
+                        id="edit_subtask_status-{{ $task->id }}"
+                        class="form-select">
+                        <option value="todo">To Do</option>
+                        <option value="inprogress">In Progress</option>
+                        <option value="finished">Finished</option>
+                    </select>
+                </div>
+                <div class="mb-2">
                     <label class="form-label">Upload File (optional)</label>
                     <input type="file" name="files[]" class="form-control" multiple>
                     <small class="text-muted">Dapat upload lebih dari satu file.</small>

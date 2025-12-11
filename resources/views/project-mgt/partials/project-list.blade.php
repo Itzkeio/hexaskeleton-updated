@@ -788,7 +788,7 @@
                     ->join('users', 'group_members.user_id', '=', 'users.id')
                     ->where('group_members.group_id', $project->picId)
                     ->select('users.*')
-                    ->get();
+                    ->get();    
                     @endphp
                     @if($picGroup)
                     <div class="alert alert-light border mb-4">

@@ -84,7 +84,7 @@ class SubtaskController extends Controller
             'description'=> $request->description,
             'notes'      => $request->notes,
             'priority'   => $request->priority,
-            'status'     => 'todo',
+            'status'     => $request->status ?? 'todo',
             'date_start' => $request->date_start,
             'date_end'   => $request->date_end,
             'duration'   => ($request->date_start && $request->date_end)
