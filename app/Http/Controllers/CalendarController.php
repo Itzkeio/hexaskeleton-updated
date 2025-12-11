@@ -13,21 +13,42 @@ class CalendarController extends Controller
         return view('calendar.index', compact('users'));
     }
 
-    public function getProjectByPic($picId){
-        $projects = Projects::where('picId', $picId)->get();
+    public function getProjectByPic($picId)
+{
+    // Ambil semua project di mana user adalah PIC individual
+    $individual = Projects::where('picType', 'individual')
+        ->where('picId', $picId);
 
-        $events = $projects->map(function($project){
-            return[
-                'id'=>$project->id,
-                'title'=>$project->name,
-                'start'=>$project->start_date,
-                'end'=>$project->end_date,
-                'color' => '#3788d8',
-            ];
+    // Ambil semua project di mana user menjadi anggota group PIC
+    $group = Projects::where('picType', 'group')
+        ->whereIn('id', function($q) use ($picId) {
+            $q->select('projectId')
+              ->from('groups')
+              ->whereIn('id', function($q2) use ($picId) {
+                  $q2->select('group_id')
+                     ->from('group_members')
+                     ->where('user_id', $picId);
+              });
         });
 
-        return response()->json($events);
-    }
+    // Gabungkan
+    $projects = $individual->union($group)->get();
+
+
+    // Mapping ke event calendar
+    $events = $projects->map(function ($project) {
+        return [
+            'id'    => $project->id,
+            'title' => $project->name,
+            'start' => $project->createdAt,
+            'end'   => $project->finishedAt,
+            'color' => '#3788d8',
+        ];
+    });
+
+    return response()->json($events);
+}
+
 
   public function getProjectDetail($id)
 {

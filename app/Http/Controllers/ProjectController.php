@@ -103,15 +103,18 @@ class ProjectController extends Controller
 
         try {
             if ($validated['picType'] === 'individual') {
-                if (!$validated['picUser']) {
-                    return back()->withErrors(['picUser' => 'Pilih user PIC untuk tipe individual.'])->withInput();
-                }
                 $picId = $validated['picUser'];
             } else {
+
                 if (!$validated['groupName']) {
                     return back()->withErrors(['groupName' => 'Masukkan nama group.'])->withInput();
                 }
-                $group = Groups::create(['name' => $validated['groupName']]);
+
+                // Group harus punya projectId
+                $group = Groups::create([
+                    'name' => $validated['groupName'],
+                    'projectId' => null, // nanti di-set setelah project dibuat
+                ]);
 
                 if (!empty($validated['groupMembers'])) {
                     foreach ($validated['groupMembers'] as $userId) {
@@ -121,8 +124,7 @@ class ProjectController extends Controller
                         ]);
                     }
                 }
-
-                $picId = $group->id;
+                $picId = null;
             }
 
             $iconName = null;
@@ -141,6 +143,11 @@ class ProjectController extends Controller
                 'createdAt' => $validated['createdAt'],
                 'finishedAt' => $validated['finishedAt'] ?? null,
             ]);
+
+            if ($validated['picType'] === 'group') {
+                $group->update(['projectId' => $project->id]);
+            }
+
 
             $version = Versions::create([
                 'projectId' => $project->id,
@@ -199,108 +206,64 @@ class ProjectController extends Controller
             'groupName' => 'nullable|string|max:255',
             'groupMembers' => 'nullable|array',
             'groupMembers.*' => 'exists:users,id',
-            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'status' => 'required|in:0,1',
-            'remove_icon' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
 
         try {
-            $oldPicType = $project->picType;
-            $oldPicId = $project->picId;
 
-            if ($validated['picType'] === 'individual') {
-                if (!$validated['picUser']) {
-                    return back()->withErrors(['picUser' => 'Pilih user PIC untuk tipe individual.'])->withInput();
-                }
-                $picId = $validated['picUser'];
-                if ($oldPicType === 'group' && $oldPicId && strlen($oldPicId) > 20) {
-                    $this->deleteGroup($oldPicId);
-                }
-            } else {
-                if (!$validated['groupName']) {
-                    return back()->withErrors(['groupName' => 'Masukkan nama group.'])->withInput();
-                }
+            // Update base project
+            $project->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'dampak' => $validated['dampak'],
+                'createdAt' => $validated['createdAt'],
+                'finishedAt' => $validated['finishedAt'],
+                'picType' => $validated['picType'],
+                'picId' => $validated['picType'] === 'individual'
+                    ? $validated['picUser']
+                    : null,
+            ]);
 
-                if ($oldPicType === 'group') {
-                    $group = Groups::find($oldPicId);
-                    if ($group) {
-                        $group->update(['name' => $validated['groupName']]);
-                        DB::table('group_members')->where('group_id', $group->id)->delete();
-                    } else {
-                        $group = Groups::create(['name' => $validated['groupName']]);
-                    }
+            // PIC Group
+             if ($validated['picType'] === 'group') {
+
+                $group = Groups::where('projectId', $project->id)->first();
+
+                if (!$group) {
+                    $group = Groups::create([
+                        'name' => $validated['groupName'],
+                        'projectId' => $project->id,
+                    ]);
                 } else {
-                    $group = Groups::create(['name' => $validated['groupName']]);
+                    $group->update(['name' => $validated['groupName']]);
+                    DB::table('group_members')->where('group_id', $group->id)->delete();
                 }
 
                 if (!empty($validated['groupMembers'])) {
-                    foreach ($validated['groupMembers'] as $userId) {
+                    foreach ($validated['groupMembers'] as $uid) {
                         DB::table('group_members')->insert([
                             'group_id' => $group->id,
-                            'user_id' => $userId,
+                            'user_id' => $uid,
                         ]);
                     }
                 }
 
-                $picId = $group->id;
-            }
-
-            $iconName = $project->icon;
-
-            if ($request->has('remove_icon') && $request->remove_icon) {
-                if ($project->icon) {
-                    Storage::delete('public/icons/' . $project->icon);
-                    $iconName = null;
-                }
-            }
-
-            if ($request->hasFile('icon')) {
-                if ($project->icon) {
-                    Storage::delete('public/icons/' . $project->icon);
-                }
-                $path = $request->file('icon')->store('public/icons');
-                $iconName = basename($path);
-            }
-
-            $project->update([
-                'name' => $validated['name'],
-                'description' => $validated['description'],
-                'picId' => $picId,
-                'picType' => $validated['picType'],
-                'icon' => $iconName,
-                'dampak' => $validated['dampak'],
-                'createdAt' => $validated['createdAt'],
-                'finishedAt' => $validated['finishedAt'] ?? null,
-            ]);
-
-            if ($project->version) {
-                $project->version->update([
-                    'version' => $validated['version'],
-                    'description' => $validated['description'],
-                    'status' => $validated['status'] == '1' || $validated['status'] == 1, // Boolean conversion
-                ]);
+                $project->update(['picId' => $group->id]);
             } else {
-                $version = Versions::create([
-                    'projectId' => $project->id,
-                    'version' => $validated['version'],
-                    'description' => $validated['description'],
-                    'status' => $validated['status'] == '1' || $validated['status'] == 1,
-                ]);
-                $project->update(['versionId' => $version->id]);
+                // dari group → individual
+                Groups::where('projectId', $project->id)->delete();
             }
 
             DB::commit();
-
-            return redirect()
-                ->route('projects.index')
+            return redirect()->route('projects.index')
                 ->with('success', 'Project berhasil diupdate!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => $e->getMessage()])->withInput();
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
+
 
     // ✨ NEW: Method untuk menambah version baru
     public function addVersion(Request $request, $id)

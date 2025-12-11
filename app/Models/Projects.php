@@ -80,6 +80,13 @@ class Projects extends Model
         return $this->relations['pic'];
     }
 
+    // App\Models\Projects.php
+    public function group()
+    {
+        return $this->belongsTo(Groups::class, 'picId', 'id');
+    }
+
+
     /**
      * Get nama PIC
      */
@@ -147,8 +154,7 @@ class Projects extends Model
     }
 
     public function statuses()
-{
-    return $this->hasMany(KanbanStatus::class, 'projectId', 'id')->orderBy('order');
-}
-
+    {
+        return $this->hasMany(KanbanStatus::class, 'projectId', 'id')->orderBy('order');
+    }
 }
