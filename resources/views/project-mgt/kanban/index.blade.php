@@ -9,29 +9,27 @@ $priorityClass = [
 
 <div class="kanban-wrapper px-2 py-3">
 
-    {{-- ROOT untuk JS (boleh id sama, nanti JS cari yang visible) --}}
+    {{-- ROOT untuk JS --}}
     <div id="kanban-root"
          data-project-id="{{ $project->id }}"
-         style="display:none;"></div>
+         style="display:none;">
+    </div>
 
     {{-- HEADER --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0">Kanban — {{ $project->name }}</h5>
 
         <div class="d-flex gap-2">
-            {{-- Manage Status --}}
             <a href="{{ route('kanban.status.index', $project->id) }}"
                class="btn btn-secondary btn-sm border">
                 <i class="ti ti-settings me-1"></i> Status
             </a>
 
-            {{-- Logs --}}
             <a href="{{ route('kanban.logs.index', $project->id) }}"
                class="btn btn-light btn-sm border">
                 <i class="ti ti-history me-1"></i> Logs
             </a>
 
-            {{-- Tambah Task --}}
             <button class="btn btn-primary btn-sm"
                     data-bs-toggle="modal"
                     data-bs-target="#createKanbanModal-{{ $project->id }}">
@@ -58,7 +56,6 @@ $priorityClass = [
     {{-- BOARD --}}
     <div class="row g-3 kanban-board" id="kanban-board-{{ $project->id }}">
 
-        {{-- JIKA BELUM ADA STATUS --}}
         @if (($project->statuses ?? collect())->count() === 0)
             <div class="col-12">
                 <div class="alert alert-info border">
@@ -67,25 +64,22 @@ $priorityClass = [
             </div>
         @endif
 
-        {{-- LOOP STATUS --}}
+        {{-- STATUS COLUMNS --}}
         @foreach ($project->statuses as $status)
             <div class="col-md-4">
                 <div class="card shadow-sm h-100">
 
-                    {{-- Header status --}}
                     <div class="card-header fw-bold"
                          style="background: {{ $status->color_bg }};
                                 border-bottom: 2px solid {{ $status->color_border }}">
                         {{ $status->label }}
                     </div>
 
-                    {{-- Body status --}}
                     <div class="card-body kanban-column"
                          id="{{ $status->key }}-{{ $project->id }}"
                          data-status="{{ $status->key }}"
                          data-project-id="{{ $project->id }}">
 
-                        {{-- Tasks --}}
                         @forelse ($project->kanban->where('status', $status->key) as $task)
                             @include('project-mgt.kanban.partials.task-card', [
                                 'task' => $task,
@@ -101,10 +95,12 @@ $priorityClass = [
             </div>
         @endforeach
 
-    </div> {{-- /kanban-board --}}
-</div>
+    </div>{{-- /kanban-board --}}
+</div>{{-- /kanban-wrapper --}}
 
-{{-- Create Task Modal --}}
+{{-- ========================================== --}}
+{{--  FIX: MODAL DIPINDAH KE LUAR KANBAN WRAPPER --}}
+{{-- ========================================== --}}
 @include('project-mgt.kanban.modals.create-task-modal', ['project' => $project])
 
 {{-- JS --}}

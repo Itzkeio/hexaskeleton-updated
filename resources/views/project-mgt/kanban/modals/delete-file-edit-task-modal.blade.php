@@ -1,5 +1,5 @@
 <div class="modal fade" id="deleteFileModalEdit-{{ $file->id }}-{{ $task->id }}" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
 
             <div class="modal-header bg-danger text-white">

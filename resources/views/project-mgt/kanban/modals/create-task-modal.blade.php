@@ -1,5 +1,5 @@
 <div class="modal fade" id="createKanbanModal-{{ $project->id }}" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
         <form
             id="createKanbanForm"
             action="{{ route('kanban.store', $project->id) }}"

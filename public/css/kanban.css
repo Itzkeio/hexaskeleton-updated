@@ -62,14 +62,12 @@
     }
 }
 
+
+/* 🔥 FIX: Paksa modal berada di atas backdrop */
 .modal {
-    position: fixed !important;
-    top: 0;
-    left: 0;
+    z-index: 99999 !important;
 }
 
-.modal-dialog {
-    margin: 0 auto !important;
+.modal-backdrop {
+    z-index: 9999 !important;
 }
-
-
