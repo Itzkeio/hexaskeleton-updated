@@ -129,6 +129,10 @@ $priorityClass = [
 
 
 {{-- JS --}}
+<script>
+    window.projectStatuses = @json($project->statuses);
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script src="{{ asset('js/kanban.js') }}"></script>
 <link rel="stylesheet" href="{{ asset('css/kanban.css') }}">

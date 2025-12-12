@@ -41,14 +41,25 @@
                             @endif
 
                             <div class="mt-1">
-                                @if($subtask->status == 'todo')
-                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">To Do</span>
-                                @elseif($subtask->status == 'inprogress')
-                                    <span class="badge bg-primary" style="font-size: 0.65rem;">In Progress</span>
-                                @else
-                                    <span class="badge bg-success" style="font-size: 0.65rem;">Finished</span>
-                                @endif
+                                    @php
+                                        $subtaskStatus = $project->statuses->firstWhere('key', $subtask->status);
+                                    @endphp
 
+                                    @if($subtaskStatus)
+                                        <span class="badge"
+                                            style="
+                                                background: {{ $subtaskStatus->color_bg }};
+                                                border: 1px solid {{ $subtaskStatus->color_border }};
+                                                color:#000;
+                                                font-size: 0.65rem;
+                                            ">
+                                            {{ $subtaskStatus->label }}
+                                        </span>
+                                    @else
+                                        <span class="badge bg-secondary" style="font-size:0.65rem;">
+                                            {{ ucfirst($subtask->status) }}
+                                        </span>
+                                    @endif
                                 @if($subtask->priority == 'urgent')
                                     <span class="badge bg-danger" style="font-size: 0.65rem;">Urgent</span>
                                 @elseif($subtask->priority == 'high')

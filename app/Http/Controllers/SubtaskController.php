@@ -61,9 +61,12 @@ class SubtaskController extends Controller
             ->orderBy('priority')
             ->get();
 
+            $project = \App\Models\Projects::findOrFail($projectId);
+
         return response()->json([
             'success' => true,
-            'subtasks' => $subtasks
+            'subtasks' => $subtasks,
+            'statuses' => $project->statuses 
         ]);
     }
 

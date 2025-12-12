@@ -224,13 +224,24 @@ window.__KANBAN_JS_LOADED__ = true;
     // ================================
     //           SUBTASK HELPERS
     // ================================
-    function getStatusBadge(status) {
+    function getStatusBadge(statusKey) {
+        // Gunakan statuses dari API jika ada
+        if (window.projectStatuses && Array.isArray(window.projectStatuses)) {
+            const status = window.projectStatuses.find(s => s.key === statusKey);
+            if (status) {
+                const bgColor = status.color_bg || '#6c757d';
+                const textColor = status.color_text || '#fff';
+                return `<span class="badge" style="background-color: ${bgColor}; color: ${textColor}; font-size: 0.65rem;">${status.label}</span>`;
+            }
+        }
+        
+        // Fallback ke default badges
         const badges = {
-            todo: '<span class="badge bg-secondary">To Do</span>',
-            inprogress: '<span class="badge bg-primary">In Progress</span>',
-            finished: '<span class="badge bg-success">Finished</span>',
+            todo: '<span class="badge bg-secondary" style="font-size: 0.65rem;">To Do</span>',
+            inprogress: '<span class="badge bg-primary" style="font-size: 0.65rem;">In Progress</span>',
+            finished: '<span class="badge bg-success" style="font-size: 0.65rem;">Finished</span>',
         };
-        return badges[status] || "";
+        return badges[statusKey] || `<span class="badge bg-secondary" style="font-size: 0.65rem;">${statusKey}</span>`;
     }
 
     function getPriorityBadge(priority) {
@@ -276,9 +287,9 @@ window.__KANBAN_JS_LOADED__ = true;
         const projectId = getProjectId();
         const listEl = document.getElementById(`subtasks-list-${kanbanId}`);
         if (!listEl) return console.warn("No subtasks list for", kanbanId);
-
+    
         listEl.innerHTML = `<div class="text-center py-3"><i class="ti ti-loader ti-spin"></i> Loading...</div>`;
-
+    
         fetch(`/projects/${projectId}/kanban/${kanbanId}/subtasks`)
             .then((r) => {
                 if (!r.ok) throw new Error("HTTP " + r.status);
@@ -293,7 +304,12 @@ window.__KANBAN_JS_LOADED__ = true;
                     listEl.innerHTML = `<div class="text-center text-muted py-3"><i class="ti ti-clipboard-list"></i><p class="mb-0 small">No subtasks yet</p></div>`;
                     return;
                 }
-
+    
+                // Simpan statuses untuk digunakan di getStatusBadge
+                if (data.statuses) {
+                    window.projectStatuses = data.statuses;
+                }
+    
                 const frag = document.createDocumentFragment();
                 data.subtasks.forEach((st) => {
                     const card = document.createElement("div");
@@ -323,7 +339,7 @@ window.__KANBAN_JS_LOADED__ = true;
                             : ""
                     }`;
                     left.appendChild(meta);
-
+    
                     // Files
                     if (
                         st.files &&
@@ -355,10 +371,10 @@ window.__KANBAN_JS_LOADED__ = true;
                         });
                         left.appendChild(filesWrap);
                     }
-
+    
                     const right = document.createElement("div");
                     right.className = "d-flex gap-1";
-
+    
                     const btnEdit = document.createElement("button");
                     btnEdit.type = "button";
                     btnEdit.className = "btn btn-sm btn-outline-primary";
@@ -366,7 +382,7 @@ window.__KANBAN_JS_LOADED__ = true;
                     btnEdit.addEventListener("click", () =>
                         openEditSubtaskModal(st.id, kanbanId, st)
                     );
-
+    
                     const btnDel = document.createElement("button");
                     btnDel.type = "button";
                     btnDel.className = "btn btn-sm btn-outline-danger";
@@ -374,10 +390,10 @@ window.__KANBAN_JS_LOADED__ = true;
                     btnDel.addEventListener("click", () =>
                         openDeleteSubtask(st.id, kanbanId)
                     );
-
+    
                     right.appendChild(btnEdit);
                     right.appendChild(btnDel);
-
+    
                     row.appendChild(left);
                     row.appendChild(right);
                     card.appendChild(row);
@@ -919,21 +935,27 @@ window.__KANBAN_JS_LOADED__ = true;
         }
 
         const badgeContainer = container?.querySelector(".mt-1");
-        if (badgeContainer) {
-            const badges = badgeContainer.querySelectorAll(".badge");
-            if (badges.length > 0) {
-                const statusBadge = badges[0];
-                if (newStatus === "finished") {
-                    statusBadge.className = "badge bg-success";
-                    statusBadge.style.fontSize = "0.65rem";
-                    statusBadge.textContent = "Finished";
-                } else {
-                    statusBadge.className = "badge bg-secondary";
-                    statusBadge.style.fontSize = "0.65rem";
-                    statusBadge.textContent = "To Do";
-                }
-            }
+if (badgeContainer) {
+    const statusBadge = badgeContainer.querySelector(".badge");
+    if (statusBadge) {
+
+        let statusMeta = null;
+        if (window.projectStatuses) {
+            statusMeta = window.projectStatuses.find(s => s.key === newStatus);
         }
+
+        if (statusMeta) {
+            statusBadge.textContent = statusMeta.label;
+            statusBadge.style.background = statusMeta.color_bg;
+            statusBadge.style.border = `1px solid ${statusMeta.color_border}`;
+            statusBadge.style.color = "#000";
+            statusBadge.style.fontSize = "0.65rem";
+        } else {
+            statusBadge.className = "badge bg-secondary";
+            statusBadge.textContent = newStatus;
+        }
+    }
+}
 
         updateSubtaskCounter(kanbanId);
 
@@ -1069,41 +1091,21 @@ window.__KANBAN_JS_LOADED__ = true;
                     const badgesDiv = document.createElement("div");
                     badgesDiv.className = "mt-1";
 
-                    let statusBadge =
-                        '<span class="badge bg-secondary" style="font-size: 0.65rem;">To Do</span>';
-                    if (subtask.status === "inprogress") {
-                        statusBadge =
-                            '<span class="badge bg-primary" style="font-size: 0.65rem;">In Progress</span>';
-                    } else if (subtask.status === "finished") {
-                        statusBadge =
-                            '<span class="badge bg-success" style="font-size: 0.65rem;">Finished</span>';
-                    }
+                    // --- DYNAMIC BADGES (FIX) ---
+// ===== FIX: DYNAMIC STATUS BADGE =====
+let statusBadge = getStatusBadge(subtask.status);
 
-                    let priorityBadge =
-                        '<span class="badge bg-secondary" style="font-size: 0.65rem;">Low</span>';
-                    if (subtask.priority === "urgent") {
-                        priorityBadge =
-                            '<span class="badge bg-danger" style="font-size: 0.65rem;">Urgent</span>';
-                    } else if (subtask.priority === "high") {
-                        priorityBadge =
-                            '<span class="badge bg-warning" style="font-size: 0.65rem;">High</span>';
-                    } else if (subtask.priority === "normal") {
-                        priorityBadge =
-                            '<span class="badge bg-primary" style="font-size: 0.65rem;">Normal</span>';
-                    }
+// ===== PRIORITY BADGE (pakai helper) =====
+let priorityBadge = getPriorityBadge(subtask.priority);
 
-                    let durationBadge = "";
-                    if (subtask.duration) {
-                        durationBadge = `<span class="badge bg-info" style="font-size: 0.65rem;"><i class="ti ti-clock"></i> ${subtask.duration} hari</span>`;
-                    }
+// ===== DURATION BADGE =====
+let durationBadge = subtask.duration
+    ? `<span class="badge bg-info" style="font-size:0.65rem;"><i class="ti ti-clock"></i> ${subtask.duration} hari</span>`
+    : "";
 
-                    badgesDiv.innerHTML =
-                        statusBadge +
-                        " " +
-                        priorityBadge +
-                        " " +
-                        durationBadge;
-                    contentDiv.appendChild(badgesDiv);
+// Render final
+badgesDiv.innerHTML = statusBadge + " " + priorityBadge + " " + durationBadge;
+
 
                     if (
                         subtask.files &&

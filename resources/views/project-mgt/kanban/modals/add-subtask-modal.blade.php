@@ -47,11 +47,13 @@
                     <label class="form-label">Status</label>
                     <select
                         name="status"
-                        id="edit_subtask_status-{{ $task->id }}"
+                        id="add_subtask_status-{{ $task->id }}"
                         class="form-select">
-                        <option value="todo">To Do</option>
-                        <option value="inprogress">In Progress</option>
-                        <option value="finished">Finished</option>
+                        @foreach ($project->statuses as $status)
+                        <option value="{{ $status->key }}" {{ $status->key === 'todo' ? 'selected' : '' }}>
+                            {{ $status->label }}
+                        </option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="mb-2">
