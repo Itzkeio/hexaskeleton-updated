@@ -1,5 +1,9 @@
-<div class="modal fade" id="deleteFileModalEdit-{{ $file->id }}-{{ $task->id }}" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+<div class="modal fade" 
+     id="deleteFileModalEdit-{{ $file->id }}-{{ $task->id }}" 
+     tabindex="-1"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
 
             <div class="modal-header bg-danger text-white">
@@ -21,7 +25,8 @@
                     class="btn btn-danger confirm-delete-file"
                     data-file-id="{{ $file->id }}"
                     data-type="task"
-                    data-kanban-id="{{ $task->id }}">
+                    data-kanban-id="{{ $task->id }}"
+                    data-parent-modal="editKanbanModal-{{ $task->id }}">
                     <i class="ti ti-trash"></i> Hapus
                 </button>
             </div>

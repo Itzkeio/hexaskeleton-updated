@@ -62,30 +62,35 @@
         opacity: 0
     }
 }
-/* HANYA task + column yang butuh posisi dan z-index */
-.kanban-column,
-.kanban-item {
-    position: relative !important;
-    z-index: 1 !important;
+/* Fix nested modal z-index */
+body.modal-open {
+    overflow: hidden;
 }
 
-/* wrapper TIDAK boleh punya stacking context */
-.kanban-wrapper,
-.kanban-board {
-    position: static !important;
-    z-index: auto !important;
-}
-
-/* Modal harus paling depan */
+/* Modal pertama (Edit Task) */
 .modal {
-    z-index: 200000 !important;
+    z-index: 1050;
 }
 
-/* Backdrop tetap di belakang modal */
 .modal-backdrop {
-    z-index: 150000 !important;
-    position: fixed !important; /* wajib agar tidak "nyangkut" di wrapper */
+    z-index: 1040;
 }
 
+/* Modal kedua (Delete File) - harus lebih tinggi */
+.modal.show ~ .modal.show {
+    z-index: 1060;
+}
 
+.modal-backdrop.show ~ .modal-backdrop.show {
+    z-index: 1055;
+}
+
+/* Atau lebih spesifik */
+[id^="deleteFileModalEdit"].modal {
+    z-index: 1060 !important;
+}
+
+[id^="deleteFileModalEdit"] ~ .modal-backdrop {
+    z-index: 1055 !important;
+}
 

@@ -1223,60 +1223,101 @@ badgesDiv.innerHTML = statusBadge + " " + priorityBadge + " " + durationBadge;
         });
 
 // ================================
-    //          DELETE FILE
-    // ================================
-    document.addEventListener("click", function (e) {
-        const btn = e.target.closest(".confirm-delete-file");
-        if (!btn) return;
+//   DELETE FILE (SEMUA TIPE)
+// ================================
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".confirm-delete-file");
+    if (!btn) return;
 
-        e.preventDefault();
-        e.stopImmediatePropagation();
+    e.preventDefault();
+    e.stopImmediatePropagation();
 
-        const fileId = btn.dataset.fileId;
-        const type = btn.dataset.type || "task";
-        const kanbanId = btn.dataset.kanbanId || null;
-        const modalEl = btn.closest(".modal");
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        const projectId = getProjectId();
+    const fileId = btn.dataset.fileId;
+    const type = btn.dataset.type || "task";
+    const kanbanId = btn.dataset.kanbanId;
+    const parentModalId = btn.dataset.parentModal; // untuk nested modal
+    const projectId = getProjectId();
 
-        console.log("🗑️ Deleting file:", { fileId, type, kanbanId, projectId });
+    if (!fileId || !projectId) {
+        showToast("Data tidak lengkap!", "danger");
+        return;
+    }
 
-        fetch(`/projects/${projectId}/kanban/file/${fileId}`, {
-            method: "DELETE",
-            headers: {
-                "X-CSRF-TOKEN": csrf,
-                Accept: "application/json",
-            },
+    console.log("🗑️ Deleting file:", { fileId, type, kanbanId, projectId, parentModalId });
+
+    // Disable button
+    btn.disabled = true;
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="ti ti-loader ti-spin"></i> Menghapus...';
+
+    // Get current modal
+    const currentModal = btn.closest(".modal");
+
+    fetch(`/projects/${projectId}/kanban/file/${fileId}`, {
+        method: "DELETE",
+        headers: {
+            "X-CSRF-TOKEN": csrf,
+            Accept: "application/json",
+        },
+    })
+        .then((r) => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
         })
-            .then((r) => r.json())
-            .then((res) => {
-                if (res.success) {
-                    showToast("File berhasil dihapus!", "success");
+        .then((res) => {
+            if (res.success) {
+                showToast("File berhasil dihapus!", "success");
 
-                    if (modal) modal.hide();
+                // Tutup modal delete
+                if (currentModal) {
+                    const modal = bootstrap.Modal.getInstance(currentModal);
+                    if (modal) {
+                        modal.hide();
+                    }
+                }
 
-                    // Reload subtasks jika diperlukan
-                    if (kanbanId && type === "subtask") {
-                        setTimeout(() => {
-                            if (typeof loadSubtasks === 'function') {
+                // Tunggu modal tertutup
+                setTimeout(() => {
+                    // Bersihkan backdrop yang dobel
+                    const backdrops = document.querySelectorAll(".modal-backdrop");
+                    if (backdrops.length > 1) {
+                        // Hapus backdrop terakhir (dari modal delete)
+                        backdrops[backdrops.length - 1].remove();
+                    }
+
+                    // Jika ada parent modal (nested), buka kembali
+                    if (parentModalId) {
+                        const parentModal = document.getElementById(parentModalId);
+                        if (parentModal) {
+                            // Refresh content atau reload subtasks
+                            if (type === "subtask" && kanbanId) {
                                 loadSubtasks(kanbanId);
+                            } else {
+                                // Reload halaman untuk refresh file list
+                                window.location.reload();
                             }
-                        }, 300);
+                        }
                     } else {
-                        // Reload page untuk refresh tampilan
+                        // Tidak ada parent modal, reload page
                         setTimeout(() => {
                             window.location.reload();
                         }, 500);
                     }
-                } else {
-                    showToast("Gagal menghapus file!", "danger");
-                }
-            })
-            .catch((err) => {
-                console.error(err);
-                showToast("Error menghapus file!", "danger");
-            });
-    });
+                }, 300);
+
+            } else {
+                showToast(res.message || "Gagal menghapus file!", "danger");
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        })
+        .catch((err) => {
+            console.error("Delete file error:", err);
+            showToast("Error: " + err.message, "danger");
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        });
+});
 
     // ================================
     //      AUTO REFRESH KANBAN
