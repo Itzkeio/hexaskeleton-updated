@@ -505,43 +505,46 @@
                             </div>
                         </div>
                     </div>
-
                     {{-- Actual Timelines --}}
                     @if($project->actualTimelines && $project->actualTimelines->count() > 0)
                     @foreach($project->actualTimelines as $timeline)
-                    <div class="mb-3 border rounded p-3 position-relative">
+                    <div class="mb-3 border rounded p-3 position-relative {{ $timeline->isOverdue() ? 'border-danger' : ($timeline->isExceedingPlanDeadline() ? 'border-warning' : '') }}">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div class="flex-grow-1">
                                 <div class="d-flex align-items-center gap-2 mb-2">
                                     <h6 class="mb-0 fw-bold">{{ $timeline->title }}</h6>
+
+                                    {{-- Progress Badge --}}
                                     <span class="badge bg-{{ $timeline->getStatusColor() }}">
                                         {{ $timeline->progress }}%
                                     </span>
-                                    @if($timeline->isOverdue())
+                                    {{-- Status Badge --}}
+                                    @if($timeline->progress >= 100)
+                                    <span class="badge bg-success">
+                                        <i class="ti ti-check-circle me-1"></i>Selesai
+                                    </span>
+                                    @elseif($timeline->isOverdue())
                                     <span class="badge bg-danger">
-                                        <i class="ti ti-alert-triangle me-1"></i>Overdue
+                                        <i class="ti ti-alert-triangle me-1"></i>Terlambat
+                                    </span>
+                                    @elseif($timeline->isExceedingPlanDeadline())
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="ti ti-alert-circle me-1"></i>Melewati Plan Awal
+                                    </span>
+                                    @else
+                                    <span class="badge bg-info">
+                                        <i class="ti ti-clock me-1"></i>{{ $timeline->getStatusText() }}
                                     </span>
                                     @endif
                                 </div>
 
-                                @if($timeline->description)
-                                <p class="text-muted mb-2 small">{{ $timeline->description }}</p>
-                                @endif
-
-                                <div class="d-flex gap-3 small text-muted mb-2">
-                                    <span>
-                                        <i class="ti ti-calendar me-1"></i>
-                                        {{ optional($timeline->start_date)->format('d M Y') ?? '-' }}
-                                    </span>
-                                    <span>
-                                        <i class="ti ti-calendar-check me-1"></i>
-                                        {{ optional($timeline->end_date)->format('d M Y') ?? '-' }}
-                                    </span>
-                                    <span>
-                                        <i class="ti ti-hourglass me-1"></i>
-                                        {{ $timeline->getDurationInDays() }} days
-                                    </span>
+                                {{-- ✅ TAMBAHAN: Warning jika melewati plan awal --}}
+                                @if($timeline->isExceedingPlanDeadline())
+                                <div class="alert alert-warning py-1 px-2 mb-2 small">
+                                    <i class="ti ti-alert-triangle me-1"></i>
+                                    Timeline ini melewati deadline plan awal ({{ $project->finishedAt ? \Carbon\Carbon::parse($project->finishedAt)->format('d M Y') : '-' }})
                                 </div>
+                                @endif
 
                                 {{-- Progress Bar --}}
                                 <div class="progress" style="height: 6px;">
@@ -788,7 +791,7 @@
                     ->join('users', 'group_members.user_id', '=', 'users.id')
                     ->where('group_members.group_id', $project->picId)
                     ->select('users.*')
-                    ->get();    
+                    ->get();
                     @endphp
                     @if($picGroup)
                     <div class="alert alert-light border mb-4">

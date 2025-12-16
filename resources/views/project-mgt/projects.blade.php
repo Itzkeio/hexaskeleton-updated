@@ -558,19 +558,19 @@
         }
 
         // Function to render Gantt Chart
-        function renderGanttChart(projectId, data) {
-            const container = $(`#ganttChart${projectId}`);
+        // Function to render Gantt Chart
+function renderGanttChart(projectId, data) {
+    const container = $(`#ganttChart${projectId}`);
 
-            if (data.length === 0) {
-                container.html(`
-                <div class="alert alert-info m-3">
-                    <i class="ti ti-info-circle me-2"></i>
-                    No timeline data available. Add timeline to see the Gantt Chart.
-                </div>
-            `);
-                return;
-            }
-
+    if (data.length === 0) {
+        container.html(`
+            <div class="alert alert-info m-3">
+                <i class="ti ti-info-circle me-2"></i>
+                No timeline data available. Add timeline to see the Gantt Chart.
+            </div>
+        `);
+        return;
+    }
             // Calculate date range
             let minDate = new Date(data[0].start);
             let maxDate = new Date(data[0].end);
@@ -630,58 +630,83 @@
             html += '</div></div>';
 
             // Render each timeline item
-            data.forEach((item, index) => {
-                const start = new Date(item.start);
-                const end = new Date(item.end);
-                const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-                const startOffset = Math.ceil((start - minDate) / (1000 * 60 * 60 * 24));
+    data.forEach((item, index) => {
+        const start = new Date(item.start);
+        const end = new Date(item.end);
+        const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        const startOffset = Math.ceil((start - minDate) / (1000 * 60 * 60 * 24));
 
-                const leftPos = startOffset * dayWidth;
-                const width = Math.max(duration * dayWidth, 30); // Minimum 30px width
+        const leftPos = startOffset * dayWidth;
+        const width = Math.max(duration * dayWidth, 30);
 
-                const bgColor = item.type === 'plan' ? '#e3f2fd' : item.color;
-                const borderColor = item.type === 'plan' ? '#90caf9' : item.color;
-                const isDark = item.type !== 'plan';
+        // ✅ Tentukan warna berdasarkan status
+        let bgColor = item.color;
+        let borderColor = item.color;
+        let badgeText = `${item.progress}% complete`;
+        let badgeClass = 'bg-primary';
 
-                html += `
-                <div class="gantt-row d-flex align-items-center mb-3 position-relative" style="min-height: 50px;">
-                    <div style="width: 200px; font-size: 13px; padding-right: 10px; flex-shrink: 0;">
-                        <div class="fw-bold text-truncate" title="${item.name}">${item.name}</div>
-                        ${item.type === 'actual' ? `<small class="text-muted">${item.progress}% complete</small>` : '<small class="text-primary">Initial Plan</small>'}
-                    </div>
-                    <div style="flex: 1; position: relative; height: 40px; min-width: 600px;">
-                        <div class="gantt-bar" 
-                            style="position: absolute; 
-                                   left: ${leftPos}px; 
-                                   width: ${width}px; 
-                                   height: 32px;
-                                   background: ${bgColor};
-                                   border: 2px solid ${borderColor};
-                                   border-radius: 6px;
-                                   display: flex;
-                                   align-items: center;
-                                   padding: 0 10px;
-                                   cursor: pointer;
-                                   transition: all 0.2s;
-                                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
-                            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
-                            onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';"
-                            title="${item.name}
+        if (item.type === 'plan') {
+            bgColor = '#e3f2fd';
+            borderColor = '#90caf9';
+            badgeText = 'PLAN AWAL';
+            badgeClass = 'bg-info';
+        } else if (item.type === 'actual') {
+            // Cek status overdue
+            const today = new Date();
+            const endDate = new Date(item.end);
+            
+            if (item.progress >= 100) {
+                bgColor = '#c8e6c9';
+                borderColor = '#4caf50';
+                badgeText = 'Selesai';
+                badgeClass = 'bg-success';
+            } else if (endDate < today) {
+                bgColor = '#ffcdd2';
+                borderColor = '#f44336';
+                badgeText = 'Terlambat';
+                badgeClass = 'bg-danger';
+            }
+        }
+
+        html += `
+            <div class="gantt-row d-flex align-items-center mb-3 position-relative" style="min-height: 50px;">
+                <div style="width: 200px; font-size: 13px; padding-right: 10px; flex-shrink: 0;">
+                    <div class="fw-bold text-truncate" title="${item.name}">${item.name}</div>
+                    <small class="badge ${badgeClass}">${badgeText}</small>
+                </div>
+                <div style="flex: 1; position: relative; height: 40px; min-width: 600px;">
+                    <div class="gantt-bar" 
+                        style="position: absolute; 
+                               left: ${leftPos}px; 
+                               width: ${width}px; 
+                               height: 32px;
+                               background: ${bgColor};
+                               border: 2px solid ${borderColor};
+                               border-radius: 6px;
+                               display: flex;
+                               align-items: center;
+                               padding: 0 10px;
+                               cursor: pointer;
+                               transition: all 0.2s;
+                               box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)';"
+                        onmouseout="this.style.transform=''; this.style.boxShadow='0 2px 4px rgba(0,0,0,0.1)';"
+                        title="${item.name}
 Start: ${formatDate(item.start)}
 End: ${formatDate(item.end)}
 Progress: ${item.progress}%${item.description ? '\n' + item.description : ''}">
-                            ${item.type === 'actual' ? `
-                                <div style="position: relative; width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden;">
-                                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${item.progress}%; background: #fff; border-radius: 3px; transition: width 0.3s;"></div>
-                                </div>
-                            ` : `
-                                <span style="color: #1976d2; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">PLAN AWAL</span>
-                            `}
-                        </div>
+                        ${item.type === 'actual' ? `
+                            <div style="position: relative; width: 100%; height: 6px; background: rgba(255,255,255,0.3); border-radius: 3px; overflow: hidden;">
+                                <div style="position: absolute; left: 0; top: 0; height: 100%; width: ${item.progress}%; background: #fff; border-radius: 3px; transition: width 0.3s;"></div>
+                            </div>
+                        ` : `
+                            <span style="color: #1976d2; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">PLAN AWAL</span>
+                        `}
                     </div>
                 </div>
-            `;
-            });
+            </div>
+        `;
+    });
 
             html += '</div></div>';
 
