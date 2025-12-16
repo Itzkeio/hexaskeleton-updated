@@ -40,6 +40,6 @@ class Subtask extends Model
     public function files()
     {
         return $this->hasMany(KanbanFile::class, 'subtaskId', 'id')
-            ->whereNull('deleted_at');
+                    ->whereNull('deleted_at');
     }
 }

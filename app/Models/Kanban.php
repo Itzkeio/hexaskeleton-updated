@@ -50,10 +50,11 @@ class Kanban extends Model
     }
 
     /** Relasi ke Files */
-    public function files()
+     public function files()
     {
-        return $this->hasMany(KanbanFile::class, 'kanbanId')
-            ->whereNull('deleted_at');
+        return $this->hasMany(KanbanFile::class, 'kanbanId', 'id')
+                    ->whereNull('subtaskId')  // ⚠️ PENTING: Filter subtask files
+                    ->whereNull('deleted_at');
     }
 
 // public function pic()
