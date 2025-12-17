@@ -564,6 +564,10 @@
                                 @endif
                                 <div class="d-flex gap-3 small text-muted mb-2">
                                     <span>
+                                        <i class="ti ti-calendar me-1"></i>
+                                        {{ optional($timeline->start_date)->format('d M Y') ?? '-' }}
+                                    </span>
+                                    <span>
                                         <i class="ti ti-calendar-check me-1"></i>
                                         {{ optional($timeline->end_date)->format('d M Y') ?? '-' }}
                                     </span>
