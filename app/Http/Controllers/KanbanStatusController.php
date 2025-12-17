@@ -65,15 +65,6 @@ class KanbanStatusController extends Controller
             'order'         => $project->statuses()->count(),
         ]);
 
-        KanbanStatus::createLog([
-            'projectId'     => $project->id,
-            'key'           => $key,
-            'label'         => $req->label,
-            'color_bg'      => $req->color_bg ?? '#e9ecef',
-            'color_border'  => $req->color_border ?? '#bfbfbf',
-            'order'         => $project->statuses()->count(),
-        ]);
-
         return back()->with('success', 'Status berhasil dibuat!');
     }
 

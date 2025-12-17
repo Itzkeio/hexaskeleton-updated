@@ -55,6 +55,13 @@
                 </div>
                 @endif
 
+                @if($task->description)
+                <div class="small text-muted mt-1">
+                    <i class="ti ti-file-description"></i>
+                    {{ $task->description }}
+                </div>
+                @endif
+
                 @if($task->notes)
                 <div class="small text-muted mt-1">
                     <i class="ti ti-note"></i>
