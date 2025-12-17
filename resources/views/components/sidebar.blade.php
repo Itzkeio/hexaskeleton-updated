@@ -87,7 +87,7 @@
                     <li class="pc-item">
                         <a href="/project-mgt/projects" class="pc-link">
                             <span class="pc-micon">
-                                <i class="ti ti-folder"></i>
+                                <i class="ti ti-briefcase"></i>
                             </span><span class="pc-mtext">Projects</span>
                         </a>
                     </li>
