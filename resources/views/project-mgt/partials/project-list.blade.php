@@ -556,6 +556,22 @@
                                         aria-valuemax="100">
                                     </div>
                                 </div>
+                                {{-- Description --}}
+                                @if(!empty($timeline->description))
+                                <div class="small text-muted mt-1">
+                                    {{ $timeline->description }}
+                                </div>
+                                @endif
+                                <div class="d-flex gap-3 small text-muted mb-2">
+                                    <span>
+                                        <i class="ti ti-calendar-check me-1"></i>
+                                        {{ optional($timeline->end_date)->format('d M Y') ?? '-' }}
+                                    </span>
+                                    <span>
+                                        <i class="ti ti-hourglass me-1"></i>
+                                        {{ $timeline->getDurationInDays() }} days
+                                    </span>
+                                </div>
                             </div>
 
                             <div class="d-flex gap-2 ms-3">
@@ -575,6 +591,7 @@
                             </div>
                         </div>
                     </div>
+
 
                     {{-- Modal Edit Timeline --}}
                     <div class="modal fade" id="editTimelineModal{{ $project->id }}_{{ $timeline->id }}" tabindex="-1" aria-hidden="true">
