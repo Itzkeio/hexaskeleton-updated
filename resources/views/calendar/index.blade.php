@@ -9,15 +9,17 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="fw-bold mb-0">📅 Project Calendar</h4>
 
-                <!-- PIC FILTER -->
+                <!-- PIC FILTER dengan Type -->
                 <div class="d-flex align-items-center gap-2">
+                    <label class="fw-semibold">PIC Type:</label>
+                    <select id="picTypeFilter" class="form-select form-select-sm w-auto">
+                        <option value="individual">Individual</option>
+                        <option value="group">Group</option>
+                    </select>
+
                     <label class="fw-semibold">PIC:</label>
                     <select id="picFilter" class="form-select form-select-sm w-auto">
-                        @foreach($users as $user)
-                        <option value="{{ $user->id }}">
-                            {{ $user->name }}
-                        </option>
-                        @endforeach
+                        <!-- Will be populated by JavaScript -->
                     </select>
                 </div>
             </div>
@@ -133,6 +135,11 @@
 
 <script>
     let calendar;
+    
+    // Data dari blade
+    const users = @json($users);
+    const groups = @json($groups);
+
     document.addEventListener('DOMContentLoaded', function() {
 
         let calendarEl = document.getElementById('projectCalendar');
@@ -179,10 +186,9 @@
                         bar.innerText = data.progress + '%';
 
                         // Kanban statuses
-                        const ul = document.getElementById('modalStatuses');
-                        ul.innerHTML = "";
                         document.getElementById('modalStatuses').innerHTML = 
                         `<li>${data.status}</li>`;
+                        
                         document.getElementById('modalViewButton').href = `/project-mgt/projects`;
 
                         const modal = new bootstrap.Modal(document.getElementById('projectModal'));
@@ -194,18 +200,45 @@
         
         calendar.render();
 
-        // load first PIC
-        loadProjects(document.getElementById('picFilter').value);
+        // Populate initial dropdown (users)
+        populatePicDropdown('individual');
+        
+        // Load first PIC
+        loadProjects();
     });
 
+    // Ganti dropdown PIC berdasarkan type
+    document.getElementById('picTypeFilter').addEventListener('change', function() {
+        const type = this.value;
+        populatePicDropdown(type);
+        loadProjects();
+    });
+
+    // Load ulang projects ketika PIC berubah
     document.getElementById('picFilter').addEventListener('change', function() {
-        loadProjects(this.value);
+        loadProjects();
     });
 
-    function loadProjects(picId) {
+    function populatePicDropdown(type) {
+        const picSelect = document.getElementById('picFilter');
+        picSelect.innerHTML = ''; // clear
+
+        const data = type === 'group' ? groups : users;
+
+        data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.id;
+            option.textContent = item.name;
+            picSelect.appendChild(option);
+        });
+    }
+
+    function loadProjects() {
+        const picId = document.getElementById('picFilter').value;
+        const picType = document.getElementById('picTypeFilter').value;
+
         calendar.removeAllEvents();
-        calendar.addEventSource(`/calendar/pic/${picId}`);
+        calendar.addEventSource(`/calendar/pic/${picId}?type=${picType}`);
     }
 </script>
 @endsection
-
