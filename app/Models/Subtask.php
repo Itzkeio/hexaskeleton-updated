@@ -42,4 +42,15 @@ class Subtask extends Model
         return $this->hasMany(KanbanFile::class, 'subtaskId', 'id')
                     ->whereNull('deleted_at');
     }
+
+    /** Relasi ke KanbanStatus */
+public function statusObject()
+{
+    return $this->belongsTo(KanbanStatus::class, 'status', 'key')
+                ->where('projectId', function($query) {
+                    $query->select('projectId')
+                          ->from('kanban')
+                          ->whereColumn('kanban.id', 'subtask.kanbanId');
+                });
+}
 }

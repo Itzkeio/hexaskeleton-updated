@@ -54,21 +54,21 @@ class SubtaskController extends Controller
         GET SUBTASKS
     ============================================================ */
     public function index($projectId, $kanbanId)
-    {
-        $subtasks = Subtask::where('kanbanId', $kanbanId)
-            ->whereNull('deleted_at')
-            ->with(['files' => fn($q) => $q->whereNull('deleted_at')])
-            ->orderBy('priority')
-            ->get();
+{
+    $subtasks = Subtask::where('kanbanId', $kanbanId)
+        ->whereNull('deleted_at')
+        ->with(['files' => fn($q) => $q->whereNull('deleted_at')])
+        ->orderBy('priority')
+        ->get();
 
-            $project = \App\Models\Projects::findOrFail($projectId);
+    $project = \App\Models\Projects::findOrFail($projectId);
 
-        return response()->json([
-            'success' => true,
-            'subtasks' => $subtasks,
-            'statuses' => $project->statuses 
-        ]);
-    }
+    return response()->json([
+        'success' => true,
+        'subtasks' => $subtasks,
+        'statuses' => $project->statuses()->orderBy('order')->get() // Tambahkan ini
+    ]);
+}
 
     /* ============================================================
         CREATE SUBTASK
@@ -88,6 +88,7 @@ class SubtaskController extends Controller
             'notes'      => $request->notes,
             'priority'   => $request->priority,
             'status'     => $request->status ?? 'todo',
+            'statusId'   => $request->statusId, 
             'date_start' => $request->date_start,
             'date_end'   => $request->date_end,
             'duration'   => ($request->date_start && $request->date_end)
@@ -134,6 +135,7 @@ class SubtaskController extends Controller
             'notes'       => $request->notes,
             'priority'    => $request->priority,
             'status'      => $request->status,
+            'statusId'    => $request->statusId,
             'date_start'  => $request->date_start,
             'date_end'    => $request->date_end,
             'duration'    => ($request->date_start && $request->date_end)

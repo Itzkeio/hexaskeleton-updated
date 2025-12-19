@@ -37,15 +37,15 @@ class Groups extends Model
 
     // GROUP → MEMBERS
     public function members()
-    {
-        return $this->belongsToMany(
-            User::class,
-            'group_members',
-            'group_id',
-            'user_id',
-            'projectId'
-        );
-    }
+{
+    return $this->belongsToMany(
+        User::class,
+        'group_members',
+        'group_id',
+        'user_id'
+    );
+}
+
 
     // GROUP → PROJECT
     public function project()
