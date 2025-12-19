@@ -15,8 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string(('name'));
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('picId')->nullable(); 
-            $table->enum('picType', ['personal', 'group'])->nullable();
+            $table->uuid('picId')->nullable(); 
+            $table->enum('picType', ['individual', 'group'])->nullable();
             $table->date('createdAt')->default(now());
             $table->date('updatedAt')->default(now());
         });

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('date_end')->nullable();
             $table->integer('duration')->nullable();
             $table->enum('priority', ['low', 'normal', 'high', 'urgent'])->default('normal');
-            $table->enum('status', ['todo', 'inprogress', 'finished'])->default('todo');
+            $table->string('status');
             $table->timestamps();
 
             $table->foreign('kanbanId')->references('id')->on('kanban')->onDelete('cascade');

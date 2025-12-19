@@ -9,9 +9,21 @@ use App\Models\Groups; // tambahkan ini
 
 class CalendarController extends Controller
 {
-    public function calendarPage()  {
+    public function calendarPage()
+    {
         $users = User::all();
-        $groups = Groups::all(); // ambil semua group
+        $groupIds = Projects::where('picType', 'group')
+            ->whereNotNull('picId')
+            ->distinct()
+            ->pluck('picId');
+
+        $groups = Groups::whereIn(
+    'id',
+    Projects::where('picType','group')
+        ->pluck('picId')
+        ->unique()
+)->orderBy('name')->get();
+        // ambil semua group
         return view('calendar.index', compact('users', 'groups'));
     }
 
@@ -19,7 +31,7 @@ class CalendarController extends Controller
     public function getProjectByPic(Request $request, $picId)
     {
         $picType = $request->query('type', 'individual'); // default individual
-        
+
         if ($picType === 'group') {
             // Ambil HANYA project dengan PIC group
             $projects = Projects::where('picType', 'group')

@@ -13,13 +13,19 @@ return new class extends Migration
     {
         Schema::create('kanban_statuses', function (Blueprint $table) {
         $table->uuid('id')->primary();
-        $table->foreignId('project_id')->constrained()->onDelete('cascade');
-        $table->string('key')->unique(); // contoh: todo, inprogress, qa-review
-        $table->string('label');         // contoh: QA Review
-        $table->string('color_bg')->default('#f1f1f1');
-        $table->string('color_border')->default('#ccc');
-        $table->integer('order')->default(0);
-        $table->timestamps();
+
+    $table->unsignedBigInteger('projectId');
+    $table->foreign('projectId')
+          ->references('id')
+          ->on('projects')
+          ->cascadeOnDelete();
+
+    $table->string('key')->unique();
+    $table->string('label');
+    $table->string('color_bg')->default('#f1f1f1');
+    $table->string('color_border')->default('#ccc');
+    $table->integer('order')->default(0);
+    $table->timestamps();
         });
     }
 

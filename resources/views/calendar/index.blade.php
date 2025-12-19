@@ -220,18 +220,20 @@
     });
 
     function populatePicDropdown(type) {
-        const picSelect = document.getElementById('picFilter');
-        picSelect.innerHTML = ''; // clear
+    const picSelect = document.getElementById('picFilter');
+    picSelect.innerHTML = '';
 
-        const data = type === 'group' ? groups : users;
+    const data = type === 'group' ? groups : users;
 
-        data.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.id;
-            option.textContent = item.name;
-            picSelect.appendChild(option);
-        });
-    }
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.name;
+        picSelect.appendChild(option);
+    });
+}
+
+
 
     function loadProjects() {
         const picId = document.getElementById('picFilter').value;

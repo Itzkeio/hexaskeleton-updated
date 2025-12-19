@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('timeline', function (Blueprint $table) {
-            $table->dropColumn(['title', 'description', 'date']);
+            $table->dropColumn([ 'description', 'date']);
         });
     }
 

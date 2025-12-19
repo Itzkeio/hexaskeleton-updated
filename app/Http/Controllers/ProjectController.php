@@ -136,16 +136,40 @@ class ProjectController extends Controller
             $project = Projects::create([
                 'name' => $validated['name'],
                 'description' => $validated['description'],
-                'picId' => $picId,
                 'picType' => $validated['picType'],
+                'picId' => null,
                 'icon' => $iconName,
                 'dampak' => $validated['dampak'],
                 'createdAt' => $validated['createdAt'],
                 'finishedAt' => $validated['finishedAt'] ?? null,
             ]);
 
+            // 2️⃣ Kalau PIC = group
             if ($validated['picType'] === 'group') {
-                $group->update(['projectId' => $project->id]);
+
+                if (!$validated['groupName']) {
+                    throw new \Exception('Nama group wajib diisi');
+                }
+
+                $group = Groups::create([
+                    'name' => $validated['groupName'],
+                    'projectId' => $project->id, // ✅ langsung isi
+                ]);
+
+                if (!empty($validated['groupMembers'])) {
+                    foreach ($validated['groupMembers'] as $userId) {
+                        DB::table('group_members')->insert([
+                            'group_id' => $group->id,
+                            'user_id' => $userId,
+                        ]);
+                    }
+                }
+
+                // set picId ke group
+                $project->update(['picId' => $group->id]);
+            } else {
+                // individual
+                $project->update(['picId' => $validated['picUser']]);
             }
 
 
@@ -190,107 +214,85 @@ class ProjectController extends Controller
         return view('project-mgt.edit', compact('project', 'users', 'groupMembers'));
     }
 
-   public function update(Request $request, $id)
-{
-    $project = Projects::findOrFail($id);
+    public function update(Request $request, $id)
+    {
+        $project = Projects::findOrFail($id);
 
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'createdAt' => 'required|date',
-        'finishedAt' => 'nullable|date|after_or_equal:createdAt',
-        'dampak' => 'nullable|string',
-        'version' => 'required|string|max:50',
-        'picType' => 'required|in:individual,group',
-        'picUser' => 'nullable|exists:users,id',
-        'groupName' => 'nullable|string|max:255',
-        'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-        'groupMembers' => 'nullable|array',
-        'groupMembers.*' => 'exists:users,id',
-    ]);
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'createdAt' => 'required|date',
+            'finishedAt' => 'nullable|date|after_or_equal:createdAt',
+            'dampak' => 'nullable|string',
+            'version' => 'required|string|max:50',
+            'picType' => 'required|in:individual,group',
+            'picUser' => 'nullable|exists:users,id',
+            'groupName' => 'nullable|string|max:255',
+            'icon' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'groupMembers' => 'nullable|array',
+            'groupMembers.*' => 'exists:users,id',
+        ]);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
-
-        /* ===============================
-            UPDATE PROJECT BASE DATA
-        =============================== */
-        $data = [
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'dampak' => $validated['dampak'],
-            'createdAt' => $validated['createdAt'],
-            'finishedAt' => $validated['finishedAt'],
-            'picType' => $validated['picType'],
-            'picId' => $validated['picType'] === 'individual'
-                ? $validated['picUser']
-                : null,
-        ];
-
-        /* ===============================
-            ICON (OPTIONAL UPDATE)
-        =============================== */
-        if ($request->hasFile('icon')) {
-
-            // hapus icon lama kalau ada
-            if ($project->icon) {
-                Storage::delete('public/icons/' . $project->icon);
+        try {
+            $iconName = null;
+            if ($request->hasFile('icon')) {
+                $path = $request->file('icon')->store('public/icons');
+                $iconName = basename($path);
             }
 
-            $path = $request->file('icon')->store('public/icons');
-            $data['icon'] = basename($path);
-        }
+            // Update base project
+            $project->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'dampak' => $validated['dampak'],
+                'createdAt' => $validated['createdAt'],
+                'finishedAt' => $validated['finishedAt'],
+                'picType' => $validated['picType'],
+                'icon' => $iconName,
+                'picId' => $validated['picType'] === 'individual'
+                    ? $validated['picUser']
+                    : null,
+            ]);
 
-        $project->update($data);
+            // PIC Group
+            if ($validated['picType'] === 'group') {
 
-        /* ===============================
-            PIC GROUP LOGIC
-        =============================== */
-        if ($validated['picType'] === 'group') {
+                $group = Groups::where('projectId', $project->id)->first();
 
-            $group = Groups::where('projectId', $project->id)->first();
-
-            if (!$group) {
-                $group = Groups::create([
-                    'name' => $validated['groupName'],
-                    'projectId' => $project->id,
-                ]);
-            } else {
-                $group->update(['name' => $validated['groupName']]);
-                DB::table('group_members')
-                    ->where('group_id', $group->id)
-                    ->delete();
-            }
-
-            if (!empty($validated['groupMembers'])) {
-                foreach ($validated['groupMembers'] as $uid) {
-                    DB::table('group_members')->insert([
-                        'group_id' => $group->id,
-                        'user_id' => $uid,
+                if (!$group) {
+                    $group = Groups::create([
+                        'name' => $validated['groupName'],
+                        'projectId' => $project->id,
                     ]);
+                } else {
+                    $group->update(['name' => $validated['groupName']]);
+                    DB::table('group_members')->where('group_id', $group->id)->delete();
                 }
+
+                if (!empty($validated['groupMembers'])) {
+                    foreach ($validated['groupMembers'] as $uid) {
+                        DB::table('group_members')->insert([
+                            'group_id' => $group->id,
+                            'user_id' => $uid,
+                        ]);
+                    }
+                }
+
+                $project->update(['picId' => $group->id]);
+            } else {
+                // dari group → individual
+                Groups::where('projectId', $project->id)->delete();
             }
-
-            $project->update(['picId' => $group->id]);
-
-        } else {
-            // group → individual
-            Groups::where('projectId', $project->id)->delete();
+            DB::commit();
+            return redirect()->route('projects.index')
+                ->with('success', 'Project berhasil diupdate!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-
-        DB::commit();
-
-        return redirect()
-            ->route('projects.index')
-            ->with('success', 'Project berhasil diupdate!');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return back()->withErrors(['error' => $e->getMessage()]);
     }
-}
-
 
 
     // ✨ NEW: Method untuk menambah version baru
@@ -593,12 +595,14 @@ class ProjectController extends Controller
 
     private function deleteGroup($groupId)
     {
-        if (!$groupId || !is_string($groupId)) {
-            // groupId invalid → jangan eksekusi apa pun
+        if (!$groupId) {
             return;
         }
 
-        DB::table('groups')->where('group_id', $groupId)->delete();
+        DB::table('group_members')
+            ->where('group_id', $groupId)
+            ->delete();
+
         Groups::where('id', $groupId)->delete();
     }
 }
